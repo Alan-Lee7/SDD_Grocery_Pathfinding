@@ -1,10 +1,10 @@
-import { ArrowLeft, Check, ExternalLink, MapPin, DollarSign, Package } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, MapPin, DollarSign, Package, TrendingDown } from "lucide-react";
 import { useState } from "react";
 
 interface Product {
   product_id: number;
   title: string;
-  price: number;
+  prices: Record<string, number>;
   image_url: string;
   affiliate_link: string;
   availability: "in_stock" | "out_of_stock" | "limited";
@@ -26,6 +26,7 @@ interface OptimizedListData {
   store: {
     store_id: number;
     name: string;
+    chain: string;
   };
   optimized_list: AisleGroup[];
   unmatched_items: string[];
@@ -34,10 +35,13 @@ interface OptimizedListData {
 interface OptimizedListProps {
   data: OptimizedListData;
   onBack: () => void;
+  largeText?: boolean;
+  onStoreSwitch?: (chain: string) => void;
 }
 
-export function OptimizedList({ data, onBack }: OptimizedListProps) {
+export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }: OptimizedListProps) {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [showComparison, setShowComparison] = useState(false);
 
   const toggleCheck = (itemKey: string) => {
     const newChecked = new Set(checkedItems);
@@ -76,13 +80,38 @@ export function OptimizedList({ data, onBack }: OptimizedListProps) {
   const checkedCount = checkedItems.size;
   const progress = (checkedCount / totalItems) * 100;
 
+  // Calculate total cost for each store
+  const calculateStoreTotals = () => {
+    const stores = ["Walmart", "Target", "Aldi", "Sam's Club", "Hannaford"];
+    const totals: Record<string, number> = {};
+    
+    stores.forEach(store => {
+      let total = 0;
+      data.optimized_list.forEach(aisleGroup => {
+        aisleGroup.items.forEach(item => {
+          if (item.product && item.product.prices[store]) {
+            total += item.product.prices[store];
+          }
+        });
+      });
+      totals[store] = total;
+    });
+    
+    return totals;
+  };
+
+  const storeTotals = calculateStoreTotals();
+  const currentStoreTotal = storeTotals[data.store.chain] || 0;
+  const cheapestStore = Object.entries(storeTotals).sort((a, b) => a[1] - b[1])[0];
+  const potentialSavings = currentStoreTotal - cheapestStore[1];
+
   return (
     <div className="max-w-4xl mx-auto">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+        className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
       >
-        <ArrowLeft className="size-5" />
+        <ArrowLeft className={largeText ? "size-6" : "size-5"} />
         New List
       </button>
 
@@ -90,28 +119,162 @@ export function OptimizedList({ data, onBack }: OptimizedListProps) {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold mb-1">Your Optimized Route</h1>
-            <p className="text-gray-600 flex items-center gap-2">
-              <MapPin className="size-4" />
+            <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-1`}>Your Optimized Route</h1>
+            <p className={`text-gray-600 flex items-center gap-2 ${largeText ? "text-lg" : "text-base"}`}>
+              <MapPin className={largeText ? "size-5" : "size-4"} />
               {data.store.name}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Progress</p>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className={`text-gray-600 ${largeText ? "text-lg" : "text-sm"}`}>Progress</p>
+            <p className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-blue-600`}>
               {checkedCount}/{totalItems}
             </p>
           </div>
         </div>
         
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-4">
           <div
             className="bg-blue-600 h-full transition-all duration-300 rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* Cart Total and Compare Button */}
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+          <div>
+            <p className="text-sm text-gray-600">Cart Total at {data.store.chain}</p>
+            <p className="text-3xl font-bold text-green-700">${currentStoreTotal.toFixed(2)}</p>
+          </div>
+          <button
+            onClick={() => setShowComparison(true)}
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-semibold"
+          >
+            <TrendingDown className="size-5" />
+            Compare Stores
+          </button>
+        </div>
       </div>
+
+      {/* Price Comparison Modal */}
+      {showComparison && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Store Price Comparison</h2>
+                <p className="text-sm text-gray-600 mt-1">See how much your cart costs at different stores</p>
+              </div>
+              <button
+                onClick={() => setShowComparison(false)}
+                className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+                aria-label="Close comparison"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto">
+              <div className="grid gap-4">
+                {Object.entries(storeTotals)
+                  .sort((a, b) => a[1] - b[1])
+                  .map(([storeName, total], index) => {
+                    const isCurrent = storeName === data.store.chain;
+                    const isCheapest = index === 0;
+                    const savingsVsCurrent = isCurrent ? 0 : currentStoreTotal - total;
+                    
+                    return (
+                      <button
+                        key={storeName}
+                        onClick={() => {
+                          if (!isCurrent && onStoreSwitch) {
+                            onStoreSwitch(storeName);
+                            setShowComparison(false);
+                          }
+                        }}
+                        disabled={isCurrent}
+                        className={`p-5 rounded-lg border-2 transition-all text-left ${
+                          isCheapest
+                            ? "bg-green-50 border-green-500"
+                            : isCurrent
+                            ? "bg-blue-50 border-blue-500"
+                            : "bg-white border-gray-200 hover:border-purple-500 hover:shadow-lg cursor-pointer"
+                        } ${isCurrent ? "cursor-default" : ""}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-xl font-bold text-gray-900">{storeName}</h3>
+                                {isCheapest && (
+                                  <span className="px-2 py-1 bg-green-600 text-white text-xs font-bold rounded">
+                                    BEST PRICE
+                                  </span>
+                                )}
+                                {isCurrent && (
+                                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
+                                    CURRENT
+                                  </span>
+                                )}
+                              </div>
+                              {!isCurrent && savingsVsCurrent > 0 && (
+                                <p className="text-sm text-green-700 font-semibold">
+                                  Save ${savingsVsCurrent.toFixed(2)} vs {data.store.chain}
+                                </p>
+                              )}
+                              {!isCurrent && savingsVsCurrent < 0 && (
+                                <p className="text-sm text-red-700 font-semibold">
+                                  ${Math.abs(savingsVsCurrent).toFixed(2)} more than {data.store.chain}
+                                </p>
+                              )}
+                              {!isCurrent && (
+                                <p className="text-xs text-purple-600 font-semibold mt-2 flex items-center gap-1">
+                                  <Package className="size-3" />
+                                  Click to switch to this store
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-3xl font-bold ${
+                              isCheapest ? "text-green-700" : isCurrent ? "text-blue-700" : "text-gray-900"
+                            }`}>
+                              ${total.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+
+              {potentialSavings > 0 && data.store.chain !== cheapestStore[0] && (
+                <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <TrendingDown className="size-6 text-yellow-700 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-yellow-900 mb-1">Potential Savings Alert!</h4>
+                      <p className="text-sm text-yellow-800">
+                        You could save <strong>${potentialSavings.toFixed(2)}</strong> by shopping at <strong>{cheapestStore[0]}</strong> instead of {data.store.chain}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowComparison(false)}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Optimized List by Aisle */}
       <div className="space-y-4">
@@ -185,23 +348,7 @@ export function OptimizedList({ data, onBack }: OptimizedListProps) {
                       <div className="flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1 font-semibold text-green-700">
                           <DollarSign className="size-4" />
-                          {item.product.price.toFixed(2)}
-                        </span>
-                        <span
-                          className={`flex items-center gap-1 ${
-                            item.product.availability === "in_stock"
-                              ? "text-green-600"
-                              : item.product.availability === "limited"
-                              ? "text-orange-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          <Package className="size-4" />
-                          {item.product.availability === "in_stock"
-                            ? "In Stock"
-                            : item.product.availability === "limited"
-                            ? "Limited"
-                            : "Out of Stock"}
+                          {(item.product.prices[data.store.chain] || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -320,7 +467,7 @@ export function OptimizedList({ data, onBack }: OptimizedListProps) {
                             <div className="flex items-center gap-4 text-sm">
                               <span className="flex items-center gap-1 font-semibold text-green-700">
                                 <DollarSign className="size-4" />
-                                {item.product.price.toFixed(2)}
+                                {(item.product.prices[data.store.chain] || 0).toFixed(2)}
                               </span>
                             </div>
                           </div>
