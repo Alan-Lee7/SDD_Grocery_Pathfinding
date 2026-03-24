@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Mail, Lock, User, ShoppingBag, ArrowRight, Check } from "lucide-react";
+import { login, register } from "../api";
 
 interface AuthProps {
-  onAuthSuccess: (user: { email: string; name: string }) => void;
+  onAuthSuccess: (user: { email: string; name: string }, token: string) => void;
 }
 
 export function Auth({ onAuthSuccess }: AuthProps) {
@@ -15,27 +16,23 @@ export function Auth({ onAuthSuccess }: AuthProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
-    // Validation
     if (!email || !password) {
       setError("Please fill in all fields");
       return;
     }
-
     if (!email.includes("@")) {
       setError("Please enter a valid email address");
       return;
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-
     if (isSignUp) {
       if (!name) {
         setError("Please enter your name");
@@ -48,58 +45,24 @@ export function Auth({ onAuthSuccess }: AuthProps) {
     }
 
     setIsLoading(true);
-    
-    setTimeout(() => {
-      // Get existing users from localStorage
-      const usersData = localStorage.getItem("shopRouteUsers");
-      const users: Record<string, { name: string; password: string }> = usersData 
-        ? JSON.parse(usersData) 
-        : {};
 
+    try {
       if (isSignUp) {
-        // Check if user already exists
-        if (users[email.toLowerCase()]) {
-          setError("An account with this email already exists");
-          setIsLoading(false);
-          return;
-        }
-
-        // Create new user
-        users[email.toLowerCase()] = {
-          name,
-          password // In production, this would be hashed!
-        };
-
-        // Save to localStorage
-        localStorage.setItem("shopRouteUsers", JSON.stringify(users));
-
-        // Show success message and switch to sign in
+        await register(email, name, password);
         setSuccessMessage("Account created successfully! Please sign in to continue.");
         setIsSignUp(false);
         setPassword("");
         setConfirmPassword("");
-        setIsLoading(false);
       } else {
-        // Sign in - check if user exists
-        const user = users[email.toLowerCase()];
-        
-        if (!user) {
-          setError("No account found with this email. Please sign up.");
-          setIsLoading(false);
-          return;
-        }
-
-        if (user.password !== password) {
-          setError("Incorrect password. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Sign in successful
-        onAuthSuccess({ email, name: user.name });
-        setIsLoading(false);
+        const { token, user } = await login(email, password);
+        localStorage.setItem("shopRoute_token", token);
+        onAuthSuccess({ email: user.email, name: user.name }, token);
       }
-    }, 800);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -113,13 +76,12 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             </div>
             <h1 className="text-5xl font-bold text-gray-900">ShopRoute</h1>
           </div>
-          
-          <p className="text-2xl text-gray-700 mb-6">
-            Shop smarter, not harder
-          </p>
-          
+
+          <p className="text-2xl text-gray-700 mb-6">Shop smarter, not harder</p>
+
           <p className="text-lg text-gray-600 mb-8">
-            Transform your grocery list into an optimized shopping route. Save time, reduce backtracking, and never miss an item.
+            Transform your grocery list into an optimized shopping route. Save time, reduce
+            backtracking, and never miss an item.
           </p>
 
           <div className="space-y-4">
@@ -160,9 +122,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                   <input
@@ -177,9 +137,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                 <input
@@ -193,9 +151,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                 <input

@@ -1,7 +1,6 @@
 import { ArrowLeft, ShoppingCart, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign } from "lucide-react";
-import { useState, useMemo } from "react";
-import { mockProducts } from "../mockData";
-import { getCouponsForStore, type Coupon } from "../couponsData";
+import { useState, useMemo, useEffect } from "react";
+import { getItems, getCoupons, type ProductData, type CouponData } from "../api";
 import { meals, getMealCategories, getMealsByCategory, type Meal } from "../mealsData";
 
 interface Store {
@@ -21,11 +20,12 @@ interface ListInputProps {
   preferStoreBrand?: boolean;
   budget?: number;
   setBudget?: (budget: number) => void;
+  isOptimizing?: boolean;
 }
 
 type Tab = "browse" | "manual" | "meals";
 
-export function ListInput({ store, onBack, onOptimize, largeText = false, preferStoreBrand = false, budget = 0, setBudget }: ListInputProps) {
+export function ListInput({ store, onBack, onOptimize, largeText = false, preferStoreBrand = false, budget = 0, setBudget, isOptimizing = false }: ListInputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [inputText, setInputText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Map<number, number>>(new Map());
@@ -33,9 +33,17 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [mealCategoryFilter, setMealCategoryFilter] = useState<string>("All");
 
-  // Get products available at this store
-  const availableProducts = useMemo(() => {
-    return mockProducts.filter(p => p.stores.includes(store.chain));
+  // Products and coupons fetched from the backend
+  const [availableProducts, setAvailableProducts] = useState<ProductData[]>([]);
+  const [coupons, setCoupons] = useState<CouponData[]>([]);
+
+  useEffect(() => {
+    getItems({ store: store.chain })
+      .then(setAvailableProducts)
+      .catch(() => setAvailableProducts([]));
+    getCoupons(store.chain)
+      .then(setCoupons)
+      .catch(() => setCoupons([]));
   }, [store.chain]);
 
   // Get unique categories
@@ -79,7 +87,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     if (activeTab === "browse") {
       // Convert selected products to item names
       items = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
-        const product = mockProducts.find(p => p.product_id === productId);
+        const product = availableProducts.find(p => p.product_id === productId);
         if (!product) return [];
         return Array(qty).fill(product.title);
       });
@@ -107,7 +115,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const cartTotal = useMemo(() => {
     let total = 0;
     selectedItems.forEach((qty, productId) => {
-      const product = mockProducts.find(p => p.product_id === productId);
+      const product = availableProducts.find(p => p.product_id === productId);
       if (product && product.prices[store.chain]) {
         total += product.prices[store.chain] * qty;
       }
@@ -122,14 +130,12 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   // Check if adding a product would exceed budget
   const canAddProduct = (productId: number) => {
     if (budget === 0) return true; // No budget set
-    const product = mockProducts.find(p => p.product_id === productId);
+    const product = availableProducts.find(p => p.product_id === productId);
     if (!product || !product.prices[store.chain]) return true;
     const newTotal = cartTotal + product.prices[store.chain];
     return newTotal <= budget;
   };
 
-  // Get coupons for the store
-  const coupons: Coupon[] = getCouponsForStore(store.chain);
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -647,11 +653,11 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </p>
         <button
           onClick={handleOptimize}
-          disabled={itemCount === 0}
+          disabled={itemCount === 0 || isOptimizing}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 transition-colors font-semibold"
         >
           <Sparkles className="size-5" />
-          Optimize My List
+          {isOptimizing ? "Optimizing..." : "Optimize My List"}
         </button>
       </div>
     </div>
