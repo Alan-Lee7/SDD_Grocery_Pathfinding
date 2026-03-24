@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # SDD_Grocery_Pathfinding
 Spring 2026 SD&amp;D Grocery Pathfinding
 =======
@@ -13,4 +13,3 @@ Spring 2026 SD&amp;D Grocery Pathfinding
 
   Run `npm run dev` to start the development server.
   
->>>>>>> myrepo/main
