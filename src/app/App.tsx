@@ -3,18 +3,8 @@ import { Auth } from "./components/Auth";
 import { StoreSelector } from "./components/StoreSelector";
 import { ListInput } from "./components/ListInput";
 import { OptimizedList } from "./components/OptimizedList";
-import { matchProducts } from "./mockData";
+import { optimizeList, getStores, getProfile, updateProfile, type StoreData } from "./api";
 import { LogOut, User as UserIcon, Settings, Type, DollarSign } from "lucide-react";
-
-interface Store {
-  store_id: number;
-  chain: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-}
 
 interface User {
   email: string;
@@ -26,91 +16,119 @@ type Step = "auth" | "store-selection" | "list-input" | "optimized-list";
 export default function App() {
   const [step, setStep] = useState<Step>("auth");
   const [user, setUser] = useState<User | null>(null);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
   const [optimizedData, setOptimizedData] = useState<any>(null);
   const [showSettings, setShowSettings] = useState(false);
-  
+  const [isOptimizing, setIsOptimizing] = useState(false);
+
   // Accessibility and preference settings
   const [largeText, setLargeText] = useState(() => {
-    const saved = localStorage.getItem("shopRoute_largeText");
-    return saved === "true";
+    return localStorage.getItem("shopRoute_largeText") === "true";
   });
   const [preferStoreBrand, setPreferStoreBrand] = useState(() => {
-    const saved = localStorage.getItem("shopRoute_preferStoreBrand");
-    return saved === "true";
+    return localStorage.getItem("shopRoute_preferStoreBrand") === "true";
   });
   const [budget, setBudget] = useState<number>(() => {
     const saved = localStorage.getItem("shopRoute_budget");
     return saved ? parseFloat(saved) : 0;
   });
 
-  // Save preferences to localStorage
+  // Persist preferences locally (also synced to backend on change)
   useEffect(() => {
     localStorage.setItem("shopRoute_largeText", String(largeText));
   }, [largeText]);
 
   useEffect(() => {
     localStorage.setItem("shopRoute_preferStoreBrand", String(preferStoreBrand));
+    if (user) {
+      updateProfile({ prefer_store_brand: preferStoreBrand }).catch(() => {});
+    }
   }, [preferStoreBrand]);
 
   useEffect(() => {
     localStorage.setItem("shopRoute_budget", String(budget));
+    if (user) {
+      updateProfile({ budget }).catch(() => {});
+    }
   }, [budget]);
 
-  const handleAuthSuccess = (userData: User) => {
+  // Restore session from stored JWT on page load
+  useEffect(() => {
+    const token = localStorage.getItem("shopRoute_token");
+    if (token) {
+      getProfile()
+        .then((profile) => {
+          setUser({ email: profile.email, name: profile.name });
+          setPreferStoreBrand(profile.prefer_store_brand);
+          setBudget(profile.budget);
+          setStep("store-selection");
+        })
+        .catch(() => {
+          // Token expired or invalid — clear it
+          localStorage.removeItem("shopRoute_token");
+        });
+    }
+  }, []);
+
+  const handleAuthSuccess = (userData: User, _token: string) => {
     setUser(userData);
     setStep("store-selection");
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("shopRoute_token");
     setUser(null);
     setStep("auth");
     setSelectedStore(null);
     setOptimizedData(null);
   };
 
-  const handleStoreSelected = (store: Store) => {
+  const handleStoreSelected = (store: StoreData) => {
     setSelectedStore(store);
     setStep("list-input");
   };
 
-  const handleOptimize = (items: string[]) => {
-    const result = matchProducts(items, selectedStore!.chain, preferStoreBrand);
-    setOptimizedData({
-      store: {
-        store_id: selectedStore!.store_id,
-        name: `${selectedStore!.chain} - ${selectedStore!.city}`,
-        chain: selectedStore!.chain
-      },
-      ...result,
-      rawItems: items // Store the original items for re-optimization
-    });
-    setStep("optimized-list");
+  const handleOptimize = async (items: string[]) => {
+    if (!selectedStore) return;
+    setIsOptimizing(true);
+    try {
+      const result = await optimizeList(items, selectedStore.chain, preferStoreBrand);
+      setOptimizedData({
+        store: {
+          store_id: selectedStore.store_id,
+          name: `${selectedStore.chain} - ${selectedStore.city}`,
+          chain: selectedStore.chain,
+        },
+        ...result,
+        rawItems: items,
+      });
+      setStep("optimized-list");
+    } catch (err) {
+      console.error("Optimize failed:", err);
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
-  const handleStoreSwitch = (newChain: string) => {
-    // Find a store with the new chain in the same area
-    const stores = [
-      { store_id: 1, chain: "Walmart", name: "Walmart Supercenter", address: "1549 Route 9", city: "Clifton Park", state: "NY", zip: "12065" },
-      { store_id: 2, chain: "Target", name: "Target", address: "760 Hoosick Rd", city: "Troy", state: "NY", zip: "12180" },
-      { store_id: 3, chain: "Hannaford", name: "Hannaford", address: "1 Clover Ridge Blvd", city: "Clifton Park", state: "NY", zip: "12065" },
-      { store_id: 4, chain: "Aldi", name: "Aldi", address: "1440 Columbia Turnpike", city: "Castleton", state: "NY", zip: "12033" },
-      { store_id: 5, chain: "Sam's Club", name: "Sam's Club", address: "200 Wade Rd", city: "Latham", state: "NY", zip: "12110" }
-    ];
-    
-    const newStore = stores.find(s => s.chain === newChain);
-    if (newStore && optimizedData?.rawItems) {
+  const handleStoreSwitch = async (newChain: string) => {
+    if (!optimizedData?.rawItems) return;
+    try {
+      const stores = await getStores(undefined, newChain);
+      const newStore = stores[0];
+      if (!newStore) return;
       setSelectedStore(newStore);
-      const result = matchProducts(optimizedData.rawItems, newChain, preferStoreBrand);
+      const result = await optimizeList(optimizedData.rawItems, newChain, preferStoreBrand);
       setOptimizedData({
         store: {
           store_id: newStore.store_id,
           name: `${newStore.chain} - ${newStore.city}`,
-          chain: newStore.chain
+          chain: newStore.chain,
         },
         ...result,
-        rawItems: optimizedData.rawItems
+        rawItems: optimizedData.rawItems,
       });
+    } catch (err) {
+      console.error("Store switch failed:", err);
     }
   };
 
@@ -130,13 +148,13 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${largeText ? "text-lg" : ""}`}>
-      {/* Header with user info and logout */}
+      {/* Header */}
       {user && (
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-blue-600`}>ShopRoute</h1>
-            </div>
+            <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-blue-600`}>
+              ShopRoute
+            </h1>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowSettings(true)}
@@ -240,7 +258,9 @@ export default function App() {
             <div className="mt-8">
               <button
                 onClick={() => setShowSettings(false)}
-                className={`w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold ${largeText ? "text-xl" : "text-base"}`}
+                className={`w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold ${
+                  largeText ? "text-xl" : "text-base"
+                }`}
               >
                 Done
               </button>
@@ -253,7 +273,7 @@ export default function App() {
         {step === "store-selection" && (
           <StoreSelector onStoreSelected={handleStoreSelected} largeText={largeText} />
         )}
-        
+
         {step === "list-input" && selectedStore && (
           <ListInput
             store={selectedStore}
@@ -263,11 +283,17 @@ export default function App() {
             preferStoreBrand={preferStoreBrand}
             budget={budget}
             setBudget={setBudget}
+            isOptimizing={isOptimizing}
           />
         )}
-        
+
         {step === "optimized-list" && optimizedData && (
-          <OptimizedList data={optimizedData} onBack={handleBack} largeText={largeText} onStoreSwitch={handleStoreSwitch} />
+          <OptimizedList
+            data={optimizedData}
+            onBack={handleBack}
+            largeText={largeText}
+            onStoreSwitch={handleStoreSwitch}
+          />
         )}
       </div>
     </div>
