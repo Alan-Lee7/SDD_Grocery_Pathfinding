@@ -41,6 +41,8 @@ class Store(db.Model):
     state = db.Column(db.String(2))
     zip = db.Column(db.String(10))
     distance = db.Column(db.Float, default=0.0)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
 
     coupons = db.relationship("Coupon", backref="store_rel", lazy=True, cascade="all, delete-orphan")
     carts = db.relationship("ShoppingCart", backref="store", lazy=True)
@@ -55,6 +57,8 @@ class Store(db.Model):
             "state": self.state,
             "zip": self.zip,
             "distance": self.distance,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
         }
 
 
