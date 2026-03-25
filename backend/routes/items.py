@@ -16,7 +16,7 @@ def get_items():
     if store_chain:
         available_ids = db.session.query(ItemStoreAvailability.item_id).filter_by(
             store_chain=store_chain
-        ).subquery()
+        ).scalar_subquery()
         query = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
     else:
         query = GroceryItem.query
