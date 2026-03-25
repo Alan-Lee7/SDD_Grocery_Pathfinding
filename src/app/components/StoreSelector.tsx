@@ -49,7 +49,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className={`${largeText ? "text-5xl" : "text-4xl"} font-bold mb-3`}>ShopRoute</h1>
+        <h1 className={`${largeText ? "text-5xl" : "text-4xl"} font-bold mb-3`}>Grocery Finder</h1>
         <p className={`${largeText ? "text-xl" : "text-lg"} text-gray-600`}>
           Optimize your grocery shopping trip by aisle
         </p>

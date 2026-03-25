@@ -74,7 +74,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             <div className="size-16 bg-blue-600 rounded-2xl flex items-center justify-center">
               <ShoppingBag className="size-9 text-white" />
             </div>
-            <h1 className="text-5xl font-bold text-gray-900">ShopRoute</h1>
+            <h1 className="text-5xl font-bold text-gray-900">Grocery Finder</h1>
           </div>
 
           <p className="text-2xl text-gray-700 mb-6">Shop smarter, not harder</p>
