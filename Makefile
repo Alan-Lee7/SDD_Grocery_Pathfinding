@@ -31,7 +31,7 @@ dev: $(SENTINEL)
 	@echo [MAKE] Starting development server...
 	$(PM) run dev
 
-# Running the server
+# Run the server
 build: $(SENTINEL)
 	@echo [MAKE] Building for production...
 	$(PM) run build
