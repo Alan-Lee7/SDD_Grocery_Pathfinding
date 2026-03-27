@@ -1,7 +1,7 @@
-import { ArrowLeft, ShoppingCart, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
-import { getItems, getCoupons, type ProductData, type CouponData } from "../api";
-import { meals, getMealCategories, getMealsByCategory, type Meal } from "../mealsData";
+import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
+import { getMealCategories, getMealsByCategory } from "../mealsData";
 
 interface Store {
   store_id: number;
@@ -33,35 +33,66 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [mealCategoryFilter, setMealCategoryFilter] = useState<string>("All");
 
+  const PAGE_SIZE = 100;
+
   // Products and coupons fetched from the backend
   const [availableProducts, setAvailableProducts] = useState<ProductData[]>([]);
+  const [productsTotal, setProductsTotal] = useState(0);
+  const [productsOffset, setProductsOffset] = useState(0);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [categories, setCategories] = useState<string[]>(["All"]);
   const [coupons, setCoupons] = useState<CouponData[]>([]);
 
+  // Debounce search query before sending to server
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   useEffect(() => {
-    getItems({ store: store.chain })
-      .then(setAvailableProducts)
-      .catch(() => setAvailableProducts([]));
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(searchQuery), 350);
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+  }, [searchQuery]);
+
+  // Fetch items from server when store, search, or category changes (reset to page 0)
+  useEffect(() => {
+    setIsLoadingProducts(true);
+    setProductsOffset(0);
+    const cat = categoryFilter === "All" ? undefined : categoryFilter;
+    getItems({ store: store.chain, search: debouncedSearch || undefined, category: cat, limit: PAGE_SIZE, offset: 0 })
+      .then((res) => {
+        setAvailableProducts(res.items);
+        setProductsTotal(res.total);
+        // Populate category list from a separate unconstrained fetch the first time
+      })
+      .catch(() => { setAvailableProducts([]); setProductsTotal(0); })
+      .finally(() => setIsLoadingProducts(false));
+  }, [store.chain, debouncedSearch, categoryFilter]);
+
+  // Fetch category list and coupons once per store
+  useEffect(() => {
+    getCategories(store.chain)
+      .then((cats) => setCategories(["All", ...cats]))
+      .catch(() => {});
     getCoupons(store.chain)
       .then(setCoupons)
       .catch(() => setCoupons([]));
   }, [store.chain]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const cats = new Set(availableProducts.map(p => p.category));
-    return ["All", ...Array.from(cats).sort()];
-  }, [availableProducts]);
+  const loadMoreProducts = () => {
+    const nextOffset = productsOffset + PAGE_SIZE;
+    setIsLoadingProducts(true);
+    const cat = categoryFilter === "All" ? undefined : categoryFilter;
+    getItems({ store: store.chain, search: debouncedSearch || undefined, category: cat, limit: PAGE_SIZE, offset: nextOffset })
+      .then((res) => {
+        setAvailableProducts((prev) => [...prev, ...res.items]);
+        setProductsTotal(res.total);
+        setProductsOffset(nextOffset);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingProducts(false));
+  };
 
-  // Filter products by search and category
-  const filteredProducts = useMemo(() => {
-    return availableProducts.filter(p => {
-      const matchesSearch = searchQuery === "" || 
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesCategory = categoryFilter === "All" || p.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
-  }, [availableProducts, searchQuery, categoryFilter]);
+  const filteredProducts = availableProducts;
 
   const addProduct = (productId: number) => {
     const newMap = new Map(selectedItems);
@@ -418,110 +449,144 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto pr-2">
-            {filteredProducts.map((product) => {
-              const quantity = selectedItems.get(product.product_id) || 0;
-              const canAdd = canAddProduct(product.product_id);
-              const wouldExceedBudget = !canAdd && budget > 0;
-              
-              return (
-                <div
-                  key={product.product_id}
-                  className={`border rounded-lg p-4 transition-all ${
-                    quantity > 0 
-                      ? "border-blue-500 bg-blue-50" 
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <img
-                    src={product.image_url}
-                    alt={product.title}
-                    className="w-full h-32 object-cover rounded-lg mb-3"
-                  />
-                  <h3 className="font-medium text-sm mb-1 line-clamp-2">{product.title}</h3>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-lg font-bold text-blue-600">
-                      ${product.prices[store.chain]?.toFixed(2) || "N/A"}
-                    </p>
-                    {product.brand === "store" && (
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">
-                        SAVE
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                      {product.category}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs rounded font-medium ${
-                        product.availability === "in_stock"
-                          ? "bg-green-100 text-green-700"
-                          : product.availability === "limited"
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-red-100 text-red-700"
+          {isLoadingProducts && availableProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <Loader2 className="size-10 animate-spin mb-3 text-blue-500" />
+              <p>Loading products...</p>
+            </div>
+          ) : (
+            <>
+              {productsTotal > 0 && (
+                <p className="text-sm text-gray-500 mb-3">
+                  Showing {filteredProducts.length} of {productsTotal.toLocaleString()} products
+                </p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2">
+                {filteredProducts.map((product) => {
+                  const quantity = selectedItems.get(product.product_id) || 0;
+                  const canAdd = canAddProduct(product.product_id);
+                  const wouldExceedBudget = !canAdd && budget > 0;
+
+                  return (
+                    <div
+                      key={product.product_id}
+                      className={`border rounded-lg p-4 transition-all ${
+                        quantity > 0
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      {product.availability === "in_stock"
-                        ? "In Stock"
-                        : product.availability === "limited"
-                        ? "Limited"
-                        : "Out of Stock"}
-                    </span>
-                  </div>
-                  
-                  {quantity === 0 ? (
-                    <>
-                      <button
-                        onClick={() => addProduct(product.product_id)}
-                        disabled={wouldExceedBudget}
-                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
-                          wouldExceedBudget
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        <Plus className="size-4" />
-                        {wouldExceedBudget ? "Over Budget" : "Add to List"}
-                      </button>
-                      {wouldExceedBudget && (
-                        <p className="text-xs text-red-600 mt-1 text-center">
-                          Would exceed budget limit
+                      <img
+                        src={product.image_url}
+                        alt={product.title}
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <h3 className="font-medium text-sm mb-1 line-clamp-2">{product.title}</h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-lg font-bold text-blue-600">
+                          {product.prices[store.chain] != null
+                            ? `$${product.prices[store.chain].toFixed(2)}`
+                            : "N/A"}
                         </p>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => removeProduct(product.product_id)}
-                        className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                      >
-                        <Minus className="size-4" />
-                      </button>
-                      <span className="font-semibold text-lg">{quantity}</span>
-                      <button
-                        onClick={() => addProduct(product.product_id)}
-                        disabled={wouldExceedBudget}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          wouldExceedBudget
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                        {product.brand === "store" && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">
+                            SAVE
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          {product.category}
+                        </span>
+                        <span
+                          className={`px-2 py-1 text-xs rounded font-medium ${
+                            product.availability === "in_stock"
+                              ? "bg-green-100 text-green-700"
+                              : product.availability === "limited"
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {product.availability === "in_stock"
+                            ? "In Stock"
+                            : product.availability === "limited"
+                            ? "Limited"
+                            : "Out of Stock"}
+                        </span>
+                      </div>
 
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Package className="size-12 mx-auto mb-2 opacity-50" />
-              <p>No products found matching your search.</p>
-            </div>
+                      {quantity === 0 ? (
+                        <>
+                          <button
+                            onClick={() => addProduct(product.product_id)}
+                            disabled={wouldExceedBudget}
+                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                              wouldExceedBudget
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
+                          >
+                            <Plus className="size-4" />
+                            {wouldExceedBudget ? "Over Budget" : "Add to List"}
+                          </button>
+                          {wouldExceedBudget && (
+                            <p className="text-xs text-red-600 mt-1 text-center">
+                              Would exceed budget limit
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => removeProduct(product.product_id)}
+                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            <Minus className="size-4" />
+                          </button>
+                          <span className="font-semibold text-lg">{quantity}</span>
+                          <button
+                            onClick={() => addProduct(product.product_id)}
+                            disabled={wouldExceedBudget}
+                            className={`px-3 py-2 rounded-lg transition-colors ${
+                              wouldExceedBudget
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
+                          >
+                            <Plus className="size-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Load More */}
+              {filteredProducts.length < productsTotal && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={loadMoreProducts}
+                    disabled={isLoadingProducts}
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                  >
+                    {isLoadingProducts ? (
+                      <><Loader2 className="size-4 animate-spin" /> Loading...</>
+                    ) : (
+                      <>Load more ({productsTotal - filteredProducts.length} remaining)</>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {filteredProducts.length === 0 && !isLoadingProducts && (
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="size-12 mx-auto mb-2 opacity-50" />
+                  <p>No products found matching your search.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
