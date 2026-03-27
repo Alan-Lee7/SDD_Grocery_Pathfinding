@@ -103,15 +103,33 @@ export interface ProductData {
   stores: string[];
 }
 
+export interface ItemsResponse {
+  items: ProductData[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export async function getCategories(store?: string): Promise<string[]> {
+  const params = new URLSearchParams();
+  if (store) params.set("store", store);
+  const res = await fetch(`${API_BASE}/items/categories?${params}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
 export async function getItems(options?: {
   store?: string;
   category?: string;
   search?: string;
-}): Promise<ProductData[]> {
+  limit?: number;
+  offset?: number;
+}): Promise<ItemsResponse> {
   const params = new URLSearchParams();
   if (options?.store) params.set("store", options.store);
   if (options?.category) params.set("category", options.category);
   if (options?.search) params.set("search", options.search);
+  if (options?.limit !== undefined) params.set("limit", String(options.limit));
+  if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const res = await fetch(`${API_BASE}/items/?${params}`, { headers: authHeaders() });
   return handleResponse(res);
 }
