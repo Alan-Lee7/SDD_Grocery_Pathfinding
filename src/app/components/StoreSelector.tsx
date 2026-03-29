@@ -7,12 +7,13 @@ interface StoreSelectorProps {
   largeText?: boolean;
 }
 
-const storeChains = ["All Stores", "Walmart", "Aldi", "Hannaford"];
+const storeChains = ["All Stores", "Walmart", "Aldi", "Hannaford", "Price Chopper"];
 
 const storeColors: Record<string, string> = {
   Walmart: "bg-blue-600",
   Aldi: "bg-orange-600",
   Hannaford: "bg-green-700",
+  "Price Chopper": "bg-red-700",
 };
 
 export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelectorProps) {
