@@ -82,7 +82,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
 
   // Calculate total cost for each store
   const calculateStoreTotals = () => {
-    const stores = ["Walmart", "Target", "Aldi", "Sam's Club", "Hannaford"];
+    const stores = ["Walmart", "Aldi", "Hannaford"];
     const totals: Record<string, number> = {};
     
     stores.forEach(store => {

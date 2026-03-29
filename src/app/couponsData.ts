@@ -55,46 +55,6 @@ export const storeCoupons: Record<string, Coupon[]> = {
       type: "special"
     }
   ],
-  "Target": [
-    {
-      id: "tg-1",
-      store: "Target",
-      title: "Circle Rewards: 10% Off Groceries",
-      description: "Target Circle members save 10% on groceries",
-      discount: "10%",
-      expiresIn: "Today only",
-      type: "percentage"
-    },
-    {
-      id: "tg-2",
-      store: "Target",
-      title: "Buy 2 Get 1 Free Dairy",
-      description: "Mix and match dairy products",
-      discount: "B2G1",
-      category: "Dairy",
-      expiresIn: "4 days",
-      type: "bogo"
-    },
-    {
-      id: "tg-3",
-      store: "Target",
-      title: "$10 Gift Card with $50+ Order",
-      description: "Spend $50 on groceries, get a $10 gift card",
-      discount: "$10 GC",
-      expiresIn: "6 days",
-      type: "special"
-    },
-    {
-      id: "tg-4",
-      store: "Target",
-      title: "15% Off Frozen Foods",
-      description: "All frozen pizzas, vegetables, and meals",
-      discount: "15%",
-      category: "Frozen",
-      expiresIn: "3 days",
-      type: "percentage"
-    }
-  ],
   "Aldi": [
     {
       id: "al-1",
@@ -134,49 +94,6 @@ export const storeCoupons: Record<string, Coupon[]> = {
       discount: "$3",
       expiresIn: "7 days",
       type: "special"
-    }
-  ],
-  "Sam's Club": [
-    {
-      id: "sc-1",
-      store: "Sam's Club",
-      title: "Member Exclusive: $5 Off Meat",
-      description: "Save $5 on $25+ meat purchase",
-      discount: "$5",
-      category: "Meat",
-      expiresIn: "4 days",
-      code: "MEAT5",
-      type: "dollar"
-    },
-    {
-      id: "sc-2",
-      store: "Sam's Club",
-      title: "Bulk Buy Bonus",
-      description: "$10 off orders $100 or more",
-      discount: "$10",
-      expiresIn: "This week",
-      code: "BULK10",
-      type: "dollar"
-    },
-    {
-      id: "sc-3",
-      store: "Sam's Club",
-      title: "Rotisserie Chicken Special",
-      description: "2 for $8 - Save $2",
-      discount: "$2",
-      category: "Deli",
-      expiresIn: "2 days",
-      type: "special"
-    },
-    {
-      id: "sc-4",
-      store: "Sam's Club",
-      title: "25% Off Household Items",
-      description: "Paper products, detergent, and cleaning supplies",
-      discount: "25%",
-      category: "Household",
-      expiresIn: "6 days",
-      type: "percentage"
     }
   ],
   "Hannaford": [

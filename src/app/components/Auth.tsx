@@ -89,7 +89,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
               <div className="size-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Check className="size-6 text-green-600" />
               </div>
-              <p className="text-gray-700">Supports Walmart, Target, Aldi, Sam's Club & more</p>
+              <p className="text-gray-700">Supports Walmart, Aldi, Hannaford & more</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="size-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
