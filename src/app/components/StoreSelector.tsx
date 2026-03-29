@@ -7,13 +7,11 @@ interface StoreSelectorProps {
   largeText?: boolean;
 }
 
-const storeChains = ["All Stores", "Walmart", "Target", "Aldi", "Sam's Club", "Hannaford"];
+const storeChains = ["All Stores", "Walmart", "Aldi", "Hannaford"];
 
 const storeColors: Record<string, string> = {
   Walmart: "bg-blue-600",
-  Target: "bg-red-600",
   Aldi: "bg-orange-600",
-  "Sam's Club": "bg-blue-700",
   Hannaford: "bg-green-700",
 };
 
@@ -54,7 +52,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
           Optimize your grocery shopping trip by aisle
         </p>
         <p className={`${largeText ? "text-base" : "text-sm"} text-gray-500 mt-2`}>
-          Supports Walmart, Target, Aldi, Sam's Club, Hannaford & more
+          Supports Walmart, Aldi, Hannaford & more
         </p>
       </div>
 
