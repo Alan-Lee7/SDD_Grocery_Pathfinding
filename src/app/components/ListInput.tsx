@@ -169,7 +169,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto pb-24">
       <button
         onClick={onBack}
         className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
@@ -711,8 +711,8 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </div>
       )}
 
-      {/* Bottom Action Bar */}
-      <div className="bg-white rounded-lg shadow-md p-4 mt-6 flex justify-between items-center">
+      {/* Bottom Action Bar - sticky */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg px-4 py-3 flex justify-between items-center">
         <p className="text-sm text-gray-600">
           {itemCount} {itemCount === 1 ? "item" : "items"} in your list
         </p>
