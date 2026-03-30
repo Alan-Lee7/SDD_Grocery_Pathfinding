@@ -14,6 +14,8 @@ from app import create_app
 from database import db
 from models import Coupon, Store, CouponProduct, GroceryItem
 
+# Each coupon has a "max_products" key controlling how many DB items to pin.
+# Keywords should be specific enough to target only the intended product(s).
 COUPONS = {
     "Walmart": [
         {
@@ -24,7 +26,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "5 days",
             "coupon_type": "dollar",
-            "keywords": "milk",
+            "keywords": "great value milk",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -34,7 +37,8 @@ COUPONS = {
             "category": "Bakery",
             "expires_in": "4 days",
             "coupon_type": "special",
-            "keywords": "bread",
+            "keywords": "sandwich bread",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -45,6 +49,7 @@ COUPONS = {
             "expires_in": "6 days",
             "coupon_type": "bogo",
             "keywords": "pasta sauce",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -54,7 +59,8 @@ COUPONS = {
             "category": "Meat",
             "expires_in": "3 days",
             "coupon_type": "special",
-            "keywords": "chicken breast",
+            "keywords": "boneless chicken breast",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -64,7 +70,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "7 days",
             "coupon_type": "special",
-            "keywords": "eggs",
+            "keywords": "large eggs",
+            "max_products": 2,
         },
         {
             "coupon_code": "WMCHEER",
@@ -75,6 +82,7 @@ COUPONS = {
             "expires_in": "5 days",
             "coupon_type": "dollar",
             "keywords": "cheerios",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -84,7 +92,8 @@ COUPONS = {
             "category": "Frozen",
             "expires_in": "4 days",
             "coupon_type": "special",
-            "keywords": "frozen pizza",
+            "keywords": "digiorno pizza",
+            "max_products": 3,
         },
         {
             "coupon_code": None,
@@ -95,6 +104,7 @@ COUPONS = {
             "expires_in": "2 days",
             "coupon_type": "dollar",
             "keywords": "bananas",
+            "max_products": 1,
         },
     ],
     "Aldi": [
@@ -107,6 +117,7 @@ COUPONS = {
             "expires_in": "3 days",
             "coupon_type": "special",
             "keywords": "ground beef",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -117,6 +128,7 @@ COUPONS = {
             "expires_in": "2 days",
             "coupon_type": "dollar",
             "keywords": "strawberries",
+            "max_products": 1,
         },
         {
             "coupon_code": None,
@@ -126,7 +138,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "5 days",
             "coupon_type": "bogo",
-            "keywords": "cheese",
+            "keywords": "shredded cheese",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -136,7 +149,8 @@ COUPONS = {
             "category": "Seafood",
             "expires_in": "4 days",
             "coupon_type": "dollar",
-            "keywords": "salmon",
+            "keywords": "salmon fillet",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -147,6 +161,7 @@ COUPONS = {
             "expires_in": "6 days",
             "coupon_type": "special",
             "keywords": "greek yogurt",
+            "max_products": 3,
         },
         {
             "coupon_code": None,
@@ -156,7 +171,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "3 days",
             "coupon_type": "dollar",
-            "keywords": "eggs",
+            "keywords": "large eggs",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -166,7 +182,8 @@ COUPONS = {
             "category": "Pantry",
             "expires_in": "7 days",
             "coupon_type": "special",
-            "keywords": "beans",
+            "keywords": "canned beans",
+            "max_products": 3,
         },
         {
             "coupon_code": None,
@@ -177,6 +194,7 @@ COUPONS = {
             "expires_in": "1 day",
             "coupon_type": "dollar",
             "keywords": "rotisserie chicken",
+            "max_products": 1,
         },
     ],
     "Hannaford": [
@@ -189,6 +207,7 @@ COUPONS = {
             "expires_in": "3 days",
             "coupon_type": "dollar",
             "keywords": "artisan bread",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -198,17 +217,19 @@ COUPONS = {
             "category": "Seafood",
             "expires_in": "4 days",
             "coupon_type": "special",
-            "keywords": "shrimp",
+            "keywords": "cooked shrimp",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
             "title": "BOGO Hannaford Orange Juice",
             "description": "Buy one, get one free on Hannaford brand 52 oz orange juice (up to $3.99 value)",
             "discount": "BOGO",
-            "category": "Dairy",
+            "category": "Beverages",
             "expires_in": "5 days",
             "coupon_type": "bogo",
             "keywords": "orange juice",
+            "max_products": 2,
         },
         {
             "coupon_code": "HFYOGURT",
@@ -218,7 +239,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "6 days",
             "coupon_type": "bogo",
-            "keywords": "greek yogurt",
+            "keywords": "chobani greek yogurt",
+            "max_products": 3,
         },
         {
             "coupon_code": "HFBAR",
@@ -229,6 +251,7 @@ COUPONS = {
             "expires_in": "7 days",
             "coupon_type": "dollar",
             "keywords": "nature valley",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -239,6 +262,7 @@ COUPONS = {
             "expires_in": "3 days",
             "coupon_type": "special",
             "keywords": "pork chops",
+            "max_products": 2,
         },
         {
             "coupon_code": None,
@@ -249,6 +273,7 @@ COUPONS = {
             "expires_in": "2 days",
             "coupon_type": "dollar",
             "keywords": "avocados",
+            "max_products": 1,
         },
         {
             "coupon_code": None,
@@ -259,6 +284,7 @@ COUPONS = {
             "expires_in": "5 days",
             "coupon_type": "special",
             "keywords": "pasta",
+            "max_products": 3,
         },
     ],
 }
@@ -268,32 +294,36 @@ def find_products_for_coupon(chain, keywords, category, max_results=2):
     """Return up to max_results GroceryItem IDs that best match the coupon keywords."""
     if not keywords:
         return []
-    terms = [t.strip() for t in keywords.split() if len(t.strip()) > 2]
-    if not terms:
-        return []
 
-    # Build a query scoped to the store chain and category
     from models import ItemStoreAvailability
     available_ids = db.session.query(ItemStoreAvailability.item_id).filter_by(
         store_chain=chain
     ).scalar_subquery()
-    query = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
-    if category:
-        query = query.filter_by(category=category)
 
-    # Filter to items whose title contains ALL keyword terms
-    for term in terms:
-        query = query.filter(GroceryItem.title.ilike(f"%{term}%"))
+    def base_query(cat):
+        q = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
+        if cat:
+            q = q.filter_by(category=cat)
+        return q
 
-    results = query.limit(max_results).all()
+    # 1. Try exact phrase match in the given category
+    results = base_query(category).filter(
+        GroceryItem.title.ilike(f"%{keywords}%")
+    ).limit(max_results).all()
 
-    # If no results with all terms, try with the full phrase
+    # 2. If nothing, try all-terms AND match in the given category
     if not results:
-        query2 = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
-        if category:
-            query2 = query2.filter_by(category=category)
-        query2 = query2.filter(GroceryItem.title.ilike(f"%{keywords}%"))
-        results = query2.limit(max_results).all()
+        terms = [t.strip() for t in keywords.split() if len(t.strip()) > 2]
+        q = base_query(category)
+        for term in terms:
+            q = q.filter(GroceryItem.title.ilike(f"%{term}%"))
+        results = q.limit(max_results).all()
+
+    # 3. If still nothing, drop the category restriction and try the full phrase
+    if not results:
+        results = base_query(None).filter(
+            GroceryItem.title.ilike(f"%{keywords}%")
+        ).limit(max_results).all()
 
     return [r.id for r in results]
 
@@ -332,7 +362,8 @@ def seed():
                 db.session.flush()  # get coupon.id
 
                 product_ids = find_products_for_coupon(
-                    chain, deal.get("keywords"), deal.get("category")
+                    chain, deal.get("keywords"), deal.get("category"),
+                    max_results=deal.get("max_products", 2)
                 )
                 for pid in product_ids:
                     db.session.add(CouponProduct(coupon_id=coupon.id, product_id=pid))
