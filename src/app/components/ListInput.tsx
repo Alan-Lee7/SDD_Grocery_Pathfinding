@@ -35,6 +35,8 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [inputText, setInputText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Map<number, number>>(new Map());
+  const [mealItems, setMealItems] = useState<string[]>([]);
+  const [addedMealIds, setAddedMealIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [mealCategoryFilter, setMealCategoryFilter] = useState<string>("All");
@@ -123,15 +125,22 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     setSelectedItems(newMap);
   };
 
+  const handleAddMeal = (mealId: string, ingredients: string[]) => {
+    setMealItems(prev => [...prev, ...ingredients]);
+    setAddedMealIds(prev => new Set([...prev, mealId]));
+    setActiveTab("browse");
+  };
+
   const handleOptimize = async () => {
     if (activeTab === "browse" || activeTab === "meals") {
-      // Browse/meals tab: products already known, send titles directly
-      const items = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
+      // Browse/meals tab: combine browse products + any added meal ingredients
+      const browseItems = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
         const product = availableProducts.find(p => p.product_id === productId);
         if (!product) return [];
         return Array(qty).fill(product.title);
       });
-      if (items.length > 0) onOptimize(items);
+      const allItems = [...browseItems, ...mealItems];
+      if (allItems.length > 0) onOptimize(allItems);
       return;
     }
 
@@ -200,7 +209,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const totalBrowseItems = Array.from(selectedItems.values()).reduce((sum, qty) => sum + qty, 0);
   // manualItemCount reserved for Write List tab — const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
 
-  const itemCount = totalBrowseItems;
+  const itemCount = totalBrowseItems + mealItems.length;
 
   // Calculate cart total
   const cartTotal = useMemo(() => {
@@ -469,6 +478,11 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           >
             <ChefHat className="size-5" />
             Meal Plans
+            {mealItems.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full">
+                {mealItems.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -746,13 +760,20 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                       </div>
                     </div>
                     
-                    <button
-                      onClick={() => onOptimize(meal.ingredients)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all text-sm font-semibold shadow-md"
-                    >
-                      <Plus className="size-5" />
-                      Add All Ingredients to List
-                    </button>
+                    {addedMealIds.has(meal.id) ? (
+                      <div className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg text-sm font-semibold border border-green-300">
+                        <CheckCircle className="size-5" />
+                        Added to List
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleAddMeal(meal.id, meal.ingredients)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all text-sm font-semibold shadow-md"
+                      >
+                        <Plus className="size-5" />
+                        Add All Ingredients to List
+                      </button>
+                    )}
                   </div>
                 </div>
               );
