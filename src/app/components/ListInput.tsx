@@ -1,4 +1,4 @@
-import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle } from "lucide-react"; // Edit3 reserved for Write List tab
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -24,7 +24,7 @@ interface ListInputProps {
   isOptimizing?: boolean;
 }
 
-type Tab = "browse" | "manual" | "meals";
+type Tab = "browse" | "meals"; // "manual" tab disabled — kept for future use
 
 interface DisambigItem {
   rawInput: string;
@@ -198,11 +198,9 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   };
 
   const totalBrowseItems = Array.from(selectedItems.values()).reduce((sum, qty) => sum + qty, 0);
-  const manualItemCount = inputText
-    .split("\n")
-    .filter((item) => item.trim().length > 0).length;
-  
-  const itemCount = activeTab === "browse" ? totalBrowseItems : manualItemCount;
+  // manualItemCount reserved for Write List tab — const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
+
+  const itemCount = totalBrowseItems;
 
   // Calculate cart total
   const cartTotal = useMemo(() => {
@@ -443,6 +441,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               </span>
             )}
           </button>
+          {/* Write List tab disabled — manual text entry removed from scope for now
           <button
             onClick={() => setActiveTab("manual")}
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
@@ -459,6 +458,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               </span>
             )}
           </button>
+          */}
           <button
             onClick={() => setActiveTab("meals")}
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
@@ -653,7 +653,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </div>
       )}
 
-      {/* Manual Tab Content */}
+      {/* Manual Tab Content — disabled, kept for future use
       {activeTab === "manual" && (
         <div className="bg-white rounded-b-lg shadow-md p-6">
           <label className="block mb-3 font-semibold text-lg">
@@ -662,7 +662,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           <p className="text-sm text-gray-600 mb-4">
             Type one item per line. We'll match them to products and sort by aisle.
           </p>
-          
+
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -677,6 +677,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           </div>
         </div>
       )}
+      */}
 
       {/* Meals Tab Content */}
       {activeTab === "meals" && (
@@ -746,13 +747,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                     </div>
                     
                     <button
-                      onClick={() => {
-                        // Add all ingredients to the manual input text
-                        const currentItems = inputText.trim() ? inputText.split("\n") : [];
-                        const newItems = [...currentItems, ...meal.ingredients];
-                        setInputText(newItems.join("\n"));
-                        setActiveTab("manual");
-                      }}
+                      onClick={() => onOptimize(meal.ingredients)}
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all text-sm font-semibold shadow-md"
                     >
                       <Plus className="size-5" />
