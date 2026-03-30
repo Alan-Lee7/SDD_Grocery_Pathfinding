@@ -1,4 +1,4 @@
-import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle } from "lucide-react"; // Edit3 reserved for Write List tab
+import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react"; // Edit3 reserved for Write List tab
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -40,6 +40,26 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [mealCategoryFilter, setMealCategoryFilter] = useState<string>("All");
+  const [showCoupons, setShowCoupons] = useState(true);
+  const [activeCoupon, setActiveCoupon] = useState<CouponData | null>(null);
+  const [couponProducts, setCouponProducts] = useState<ProductData[]>([]);
+  const [loadingCouponProducts, setLoadingCouponProducts] = useState(false);
+  const [expandedCouponItems, setExpandedCouponItems] = useState<Set<number>>(new Set());
+
+  // Fetch products for the active coupon using its pinned product_ids
+  useEffect(() => {
+    if (!activeCoupon) return;
+    setLoadingCouponProducts(true);
+    const ids = activeCoupon.product_ids;
+    getItems({
+      store: store.chain,
+      ...(ids && ids.length > 0 ? { ids } : { search: activeCoupon.keywords || undefined, category: activeCoupon.keywords ? undefined : activeCoupon.category }),
+      limit: 50,
+    })
+      .then(res => setCouponProducts(res.items))
+      .catch(() => setCouponProducts([]))
+      .finally(() => setLoadingCouponProducts(false));
+  }, [activeCoupon, store.chain]);
 
   const PAGE_SIZE = 100;
 
@@ -360,74 +380,91 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
       {/* Coupons & Deals Section */}
       {coupons.length > 0 && (
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md p-6 mb-6 border-2 border-green-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-green-600 rounded-lg">
-              <Tag className="size-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xl text-green-900">Today's Deals & Coupons</h3>
-              <p className="text-sm text-green-700">
-                Save more on your {store.chain} shopping trip
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {coupons.map((coupon) => (
-              <div
-                key={coupon.id}
-                className="bg-white rounded-lg p-4 border-2 border-dashed border-green-300 hover:border-green-500 transition-all hover:shadow-md"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      {coupon.type === "percentage" && (
-                        <div className="p-1 bg-green-100 rounded">
-                          <Percent className="size-4 text-green-700" />
-                        </div>
-                      )}
-                      {coupon.type === "dollar" && (
-                        <div className="p-1 bg-blue-100 rounded">
-                          <span className="text-blue-700 font-bold text-sm">$</span>
-                        </div>
-                      )}
-                      {(coupon.type === "bogo" || coupon.type === "special") && (
-                        <div className="p-1 bg-purple-100 rounded">
-                          <Sparkles className="size-4 text-purple-700" />
-                        </div>
-                      )}
-                      <h4 className="font-bold text-gray-900">{coupon.title}</h4>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
-                    {coupon.category && (
-                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mb-2">
-                        {coupon.category}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-right ml-3">
-                    <div className="font-bold text-2xl text-green-700">
-                      {coupon.discount}
-                    </div>
-                    <div className="text-xs text-gray-500 uppercase">Off</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="size-3" />
-                    Expires {coupon.expiresIn}
-                  </div>
-                  {coupon.code && (
-                    <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-mono font-bold rounded border border-green-300">
-                      {coupon.code}
-                    </div>
-                  )}
-                </div>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md mb-6 border-2 border-green-300 overflow-hidden">
+          {/* Collapsible header */}
+          <button
+            onClick={() => setShowCoupons(prev => !prev)}
+            className="w-full flex items-center justify-between p-4 hover:bg-green-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-600 rounded-lg">
+                <Tag className="size-5 text-white" />
               </div>
-            ))}
-          </div>
+              <div className="text-left">
+                <h3 className="font-bold text-lg text-green-900">Today's Deals & Coupons</h3>
+                <p className="text-xs text-green-700">{coupons.length} deals available at {store.chain} — check before you shop!</p>
+              </div>
+            </div>
+            {showCoupons ? (
+              <ChevronUp className="size-5 text-green-700 shrink-0" />
+            ) : (
+              <ChevronDown className="size-5 text-green-700 shrink-0" />
+            )}
+          </button>
+
+          {showCoupons && (
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {coupons.map((coupon) => (
+                  <button
+                    key={coupon.id}
+                    onClick={() => setActiveCoupon(coupon)}
+                    className="text-left bg-white rounded-lg p-4 border-2 border-dashed border-green-300 hover:border-green-500 hover:shadow-md transition-all w-full"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {coupon.type === "percentage" && (
+                            <div className="p-1 bg-green-100 rounded">
+                              <Percent className="size-4 text-green-700" />
+                            </div>
+                          )}
+                          {coupon.type === "dollar" && (
+                            <div className="p-1 bg-blue-100 rounded">
+                              <span className="text-blue-700 font-bold text-sm">$</span>
+                            </div>
+                          )}
+                          {(coupon.type === "bogo" || coupon.type === "special") && (
+                            <div className="p-1 bg-purple-100 rounded">
+                              <Sparkles className="size-4 text-purple-700" />
+                            </div>
+                          )}
+                          <h4 className="font-bold text-gray-900">{coupon.title}</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
+                        {coupon.category && (
+                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mb-2">
+                            {coupon.category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right ml-3">
+                        <div className="font-bold text-2xl text-green-700">
+                          {coupon.discount}
+                        </div>
+                        <div className="text-xs text-gray-500 uppercase">Off</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="size-3" />
+                        Expires {coupon.expiresIn}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {coupon.code && (
+                          <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-mono font-bold rounded border border-green-300">
+                            {coupon.code}
+                          </div>
+                        )}
+                        <span className="text-xs text-green-700 font-semibold underline">View items →</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -542,6 +579,9 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   const quantity = selectedItems.get(product.product_id) || 0;
                   const canAdd = canAddProduct(product.product_id);
                   const wouldExceedBudget = !canAdd && budget > 0;
+                  const matchingCoupons = coupons.filter(c =>
+                    c.product_ids && c.product_ids.includes(product.product_id)
+                  );
 
                   return (
                     <div
@@ -549,9 +589,22 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                       className={`border rounded-lg p-4 transition-all ${
                         quantity > 0
                           ? "border-blue-500 bg-blue-50"
+                          : matchingCoupons.length > 0
+                          ? "border-green-400 bg-green-50 hover:border-green-500"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
+                      {/* Deal banner */}
+                      {matchingCoupons.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {matchingCoupons.map(c => (
+                            <div key={c.id} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                              <Tag className="size-3" />
+                              {c.discount} — {c.title}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <img
                         src={product.image_url}
                         alt={product.title}
@@ -803,6 +856,127 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           {isOptimizing ? "Optimizing..." : "Optimize My List"}
         </button>
       </div>
+
+      {/* Coupon Items Dialog */}
+      {activeCoupon && (
+        <Dialog open={!!activeCoupon} onOpenChange={(open) => { if (!open) setActiveCoupon(null); }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Tag className="size-5 text-green-600" />
+                {activeCoupon.title}
+              </DialogTitle>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-2xl font-bold text-green-700">{activeCoupon.discount}</span>
+                <span className="text-sm text-gray-600">{activeCoupon.description}</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><Clock className="size-3" /> Expires {activeCoupon.expiresIn}</span>
+                {activeCoupon.code && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 font-mono font-bold rounded border border-green-300">
+                    {activeCoupon.code}
+                  </span>
+                )}
+              </div>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto mt-4">
+              {loadingCouponProducts ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <Loader2 className="size-8 animate-spin mb-2 text-green-500" />
+                  <p className="text-sm">Loading eligible items...</p>
+                </div>
+              ) : couponProducts.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="size-10 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No matching products found for this deal.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 mb-3">{couponProducts.length} eligible product{couponProducts.length !== 1 ? "s" : ""} in the <span className="font-semibold text-gray-700">{activeCoupon.category}</span> category</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {couponProducts.map((product) => {
+                      const quantity = selectedItems.get(product.product_id) || 0;
+                      const canAdd = canAddProduct(product.product_id);
+                      const wouldExceedBudget = !canAdd && budget > 0;
+                      return (
+                        <div
+                          key={product.product_id}
+                          className={`border rounded-lg p-3 transition-all ${
+                            quantity > 0 ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                          }`}
+                        >
+                          <div className="flex gap-3">
+                            <img
+                              src={product.image_url}
+                              alt={product.title}
+                              className="w-16 h-16 object-cover rounded-lg shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium mb-1 ${expandedCouponItems.has(product.product_id) ? "" : "line-clamp-2"}`}>{product.title}</p>
+                              {product.title.length > 60 && (
+                                <button
+                                  onClick={() => setExpandedCouponItems(prev => {
+                                    const next = new Set(prev);
+                                    next.has(product.product_id) ? next.delete(product.product_id) : next.add(product.product_id);
+                                    return next;
+                                  })}
+                                  className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-0.5 mb-1"
+                                >
+                                  {expandedCouponItems.has(product.product_id) ? <><ChevronUp className="size-3" /> Show less</> : <><ChevronDown className="size-3" /> Show more</>}
+                                </button>
+                              )}
+                              <p className="text-base font-bold text-blue-600">
+                                {product.prices[store.chain] != null ? `$${product.prices[store.chain].toFixed(2)}` : "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            {quantity === 0 ? (
+                              <button
+                                onClick={() => addProduct(product.product_id)}
+                                disabled={wouldExceedBudget}
+                                className={`w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                  wouldExceedBudget
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 text-white hover:bg-blue-700"
+                                }`}
+                              >
+                                <Plus className="size-3" />
+                                {wouldExceedBudget ? "Over Budget" : "Add to List"}
+                              </button>
+                            ) : (
+                              <div className="flex items-center justify-between gap-2">
+                                <button
+                                  onClick={() => removeProduct(product.product_id)}
+                                  className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                >
+                                  <Minus className="size-3" />
+                                </button>
+                                <span className="font-semibold">{quantity}</span>
+                                <button
+                                  onClick={() => addProduct(product.product_id)}
+                                  disabled={wouldExceedBudget}
+                                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                                    wouldExceedBudget ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
+                                  }`}
+                                >
+                                  <Plus className="size-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Item Disambiguation Dialog */}
       {disambigQueue.length > 0 && (

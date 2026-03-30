@@ -155,6 +155,9 @@ class Coupon(db.Model):
     category = db.Column(db.String(50))
     expires_in = db.Column(db.String(50))
     coupon_type = db.Column(db.String(20))  # percentage, dollar, bogo, special
+    keywords = db.Column(db.String(200))  # search term used to find eligible products
+
+    eligible_products = db.relationship("CouponProduct", backref="coupon_rel", lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -167,7 +170,18 @@ class Coupon(db.Model):
             "expiresIn": self.expires_in,
             "code": self.coupon_code,
             "type": self.coupon_type,
+            "keywords": self.keywords,
+            "product_ids": [cp.product_id for cp in self.eligible_products],
         }
+
+
+class CouponProduct(db.Model):
+    """Links a Coupon to a specific eligible GroceryItem."""
+    __tablename__ = "coupon_product"
+
+    id = db.Column(db.Integer, primary_key=True)
+    coupon_id = db.Column(db.Integer, db.ForeignKey("coupon.id"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("grocery_item.id"), nullable=False)
 
 
 class ShoppingCart(db.Model):
