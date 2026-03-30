@@ -219,6 +219,7 @@ COUPONS = {
             "coupon_type": "special",
             "keywords": "cooked shrimp",
             "max_products": 2,
+            "exact_titles": ["Cox's 41/50 Wild-Caught Key West Pink Raw Shrimp"],
         },
         {
             "coupon_code": None,
@@ -285,17 +286,31 @@ COUPONS = {
             "coupon_type": "special",
             "keywords": "pasta",
             "max_products": 3,
+            "exact_titles": ["Barilla Mini Penne Pasta, Quality Non-GMO and Kosher Certified Pasta"],
         },
     ],
 }
 
 
-def find_products_for_coupon(chain, keywords, category, max_results=2):
+def find_products_for_coupon(chain, keywords, category, max_results=2, exact_titles=None):
     """Return up to max_results GroceryItem IDs that best match the coupon keywords."""
+    from models import ItemStoreAvailability
+
+    # If exact titles are provided, look those up directly and skip keyword search
+    if exact_titles:
+        ids = []
+        for t in exact_titles:
+            item = GroceryItem.query.filter(
+                GroceryItem.title.ilike(t)
+            ).first()
+            if item:
+                ids.append(item.id)
+            else:
+                print(f"    WARNING: exact title not found: {t!r}")
+        return ids
+
     if not keywords:
         return []
-
-    from models import ItemStoreAvailability
     available_ids = db.session.query(ItemStoreAvailability.item_id).filter_by(
         store_chain=chain
     ).scalar_subquery()
@@ -363,7 +378,8 @@ def seed():
 
                 product_ids = find_products_for_coupon(
                     chain, deal.get("keywords"), deal.get("category"),
-                    max_results=deal.get("max_products", 2)
+                    max_results=deal.get("max_products", 2),
+                    exact_titles=deal.get("exact_titles"),
                 )
                 for pid in product_ids:
                     db.session.add(CouponProduct(coupon_id=coupon.id, product_id=pid))
