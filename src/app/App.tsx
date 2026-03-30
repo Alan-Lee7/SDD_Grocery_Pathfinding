@@ -226,33 +226,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Store Brand Preference Toggle */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className={largeText ? "size-6 text-green-600" : "size-5 text-green-600"} />
-                    <h3 className={`${largeText ? "text-xl" : "text-lg"} font-semibold text-gray-900`}>
-                      Prefer Store Brands
-                    </h3>
-                  </div>
-                  <p className={`${largeText ? "text-lg" : "text-sm"} text-gray-600`}>
-                    Automatically select cheaper store brand products to save money
-                  </p>
-                </div>
-                <button
-                  onClick={() => setPreferStoreBrand(!preferStoreBrand)}
-                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                    preferStoreBrand ? "bg-green-600" : "bg-gray-300"
-                  }`}
-                  aria-label="Toggle store brand preference"
-                >
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                      preferStoreBrand ? "translate-x-7" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
             </div>
 
             <div className="mt-8">
