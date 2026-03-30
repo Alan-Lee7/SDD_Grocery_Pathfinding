@@ -1,6 +1,7 @@
-import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Edit3, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { getMealCategories, getMealsByCategory } from "../mealsData";
 
 interface Store {
@@ -25,6 +26,11 @@ interface ListInputProps {
 
 type Tab = "browse" | "manual" | "meals";
 
+interface DisambigItem {
+  rawInput: string;
+  candidates: ProductData[];
+}
+
 export function ListInput({ store, onBack, onOptimize, largeText = false, preferStoreBrand = false, budget = 0, setBudget, isOptimizing = false }: ListInputProps) {
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [inputText, setInputText] = useState("");
@@ -42,6 +48,11 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [coupons, setCoupons] = useState<CouponData[]>([]);
+
+  // Disambiguation state for the manual "Write List" tab
+  const [disambigQueue, setDisambigQueue] = useState<DisambigItem[]>([]);
+  const [disambigOpen, setDisambigOpen] = useState(false);
+  const [resolvedTitles, setResolvedTitles] = useState<Map<string, string>>(new Map());
 
   // Debounce search query before sending to server
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,26 +123,77 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     setSelectedItems(newMap);
   };
 
-  const handleOptimize = () => {
-    let items: string[] = [];
-
-    if (activeTab === "browse") {
-      // Convert selected products to item names
-      items = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
+  const handleOptimize = async () => {
+    if (activeTab === "browse" || activeTab === "meals") {
+      // Browse/meals tab: products already known, send titles directly
+      const items = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
         const product = availableProducts.find(p => p.product_id === productId);
         if (!product) return [];
         return Array(qty).fill(product.title);
       });
+      if (items.length > 0) onOptimize(items);
+      return;
+    }
+
+    // Manual tab: fetch candidates for each item, then disambiguate if needed
+    const rawItems = inputText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+
+    if (rawItems.length === 0) return;
+
+    // Fetch up to 5 candidates per item in parallel
+    const results = await Promise.all(
+      rawItems.map((raw) =>
+        getItems({ store: store.chain, search: raw, limit: 5 })
+          .then((res) => ({ raw, candidates: res.items }))
+          .catch(() => ({ raw, candidates: [] as ProductData[] }))
+      )
+    );
+
+    // Items with exactly 1 candidate are auto-resolved; >1 need user input
+    const newResolved = new Map<string, string>();
+    const needsPicking: DisambigItem[] = [];
+
+    for (const { raw, candidates } of results) {
+      if (candidates.length === 1) {
+        newResolved.set(raw, candidates[0].title);
+      } else if (candidates.length > 1) {
+        needsPicking.push({ rawInput: raw, candidates });
+      }
+      // 0 candidates → leave unresolved (backend will mark as unmatched)
+    }
+
+    setResolvedTitles(newResolved);
+
+    if (needsPicking.length > 0) {
+      setDisambigQueue(needsPicking);
+      setDisambigOpen(true);
     } else {
-      // Manual text input
-      items = inputText
+      // Nothing to disambiguate — go straight to optimize
+      const finalItems = rawItems.map((raw) => newResolved.get(raw) ?? raw);
+      onOptimize(finalItems);
+    }
+  };
+
+  // Called each time the user picks a product in the dialog
+  const handleDisambigPick = (rawInput: string, chosenTitle: string) => {
+    const newResolved = new Map(resolvedTitles);
+    newResolved.set(rawInput, chosenTitle);
+    setResolvedTitles(newResolved);
+
+    const remaining = disambigQueue.slice(1);
+    setDisambigQueue(remaining);
+
+    if (remaining.length === 0) {
+      setDisambigOpen(false);
+      const rawItems = inputText
         .split("\n")
         .map((item) => item.trim())
         .filter((item) => item.length > 0);
-    }
-
-    if (items.length > 0) {
-      onOptimize(items);
+      const finalItems = rawItems.map((raw) => newResolved.get(raw) ?? raw);
+      onOptimize(finalItems);
     }
   };
 
@@ -725,6 +787,56 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
           {isOptimizing ? "Optimizing..." : "Optimize My List"}
         </button>
       </div>
+
+      {/* Item Disambiguation Dialog */}
+      {disambigQueue.length > 0 && (
+        <Dialog open={disambigOpen} onOpenChange={setDisambigOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Which "{disambigQueue[0].rawInput}" do you want?</DialogTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                We found {disambigQueue[0].candidates.length} matches. Pick the one you want.
+                {disambigQueue.length > 1 && (
+                  <span className="ml-2 text-blue-600 font-medium">
+                    ({disambigQueue.length} items left to confirm)
+                  </span>
+                )}
+              </p>
+            </DialogHeader>
+
+            <div className="overflow-y-auto flex-1 mt-2 space-y-2 pr-1">
+              {disambigQueue[0].candidates.map((product) => (
+                <button
+                  key={product.product_id}
+                  onClick={() => handleDisambigPick(disambigQueue[0].rawInput, product.title)}
+                  className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-left"
+                >
+                  {product.image_url && (
+                    <img
+                      src={product.image_url}
+                      alt={product.title}
+                      className="w-14 h-14 object-cover rounded-md flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 line-clamp-2">{product.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-blue-600 font-semibold text-sm">
+                        {product.prices[store.chain] != null
+                          ? `$${product.prices[store.chain].toFixed(2)}`
+                          : "Price N/A"}
+                      </span>
+                      <span className="text-xs text-gray-400">{product.category}</span>
+                    </div>
+                  </div>
+                  <CheckCircle className="size-5 text-gray-300 flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
