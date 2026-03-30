@@ -121,6 +121,7 @@ export async function getItems(options?: {
   store?: string;
   category?: string;
   search?: string;
+  ids?: number[];
   limit?: number;
   offset?: number;
 }): Promise<ItemsResponse> {
@@ -128,6 +129,7 @@ export async function getItems(options?: {
   if (options?.store) params.set("store", options.store);
   if (options?.category) params.set("category", options.category);
   if (options?.search) params.set("search", options.search);
+  if (options?.ids?.length) params.set("ids", options.ids.join(","));
   if (options?.limit !== undefined) params.set("limit", String(options.limit));
   if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const res = await fetch(`${API_BASE}/items/?${params}`, { headers: authHeaders() });
@@ -146,6 +148,8 @@ export interface CouponData {
   expiresIn: string;
   code?: string;
   type: "percentage" | "dollar" | "bogo" | "special";
+  keywords?: string;
+  product_ids?: number[];
 }
 
 export async function getCoupons(store: string): Promise<CouponData[]> {

@@ -13,6 +13,7 @@ def get_items():
     store_chain = request.args.get("store")
     category = request.args.get("category")
     search = request.args.get("search", "").strip()
+    ids_param = request.args.get("ids", "").strip()
     limit = min(int(request.args.get("limit", 100)), 500)
     offset = max(int(request.args.get("offset", 0)), 0)
 
@@ -23,6 +24,10 @@ def get_items():
         query = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
     else:
         query = GroceryItem.query
+
+    if ids_param:
+        id_list = [int(i) for i in ids_param.split(",") if i.strip().isdigit()]
+        query = query.filter(GroceryItem.id.in_(id_list))
 
     if category:
         query = query.filter_by(category=category)
