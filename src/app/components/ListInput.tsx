@@ -1,4 +1,4 @@
-import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react"; // Edit3 reserved for Write List tab
+﻿import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react"; // Edit3 reserved for Write List tab
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -24,7 +24,7 @@ interface ListInputProps {
   isOptimizing?: boolean;
 }
 
-type Tab = "browse" | "meals"; // "manual" tab disabled — kept for future use
+type Tab = "browse" | "meals"; // "manual" tab disabled â€” kept for future use
 
 interface DisambigItem {
   rawInput: string;
@@ -35,7 +35,6 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [inputText, setInputText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Map<number, number>>(new Map());
-  const [selectedProductsCache, setSelectedProductsCache] = useState<Map<number, ProductData>>(new Map());
   const [mealItems, setMealItems] = useState<string[]>([]);
   const [addedMealIds, setAddedMealIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -127,19 +126,18 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   };
 
   const filteredProducts = availableProducts;
+  const productLookup = useMemo(() => {
+    const m = new Map<number, ProductData>();
+    for (const p of availableProducts) m.set(p.product_id, p);
+    for (const p of couponProducts) if (!m.has(p.product_id)) m.set(p.product_id, p);
+    return m;
+  }, [availableProducts, couponProducts]);
 
   const addProduct = (productId: number) => {
     const newMap = new Map(selectedItems);
     const currentQty = newMap.get(productId) || 0;
     newMap.set(productId, currentQty + 1);
     setSelectedItems(newMap);
-    // Cache the product data so it's available at optimize time regardless of current search/filter
-    if (!selectedProductsCache.has(productId)) {
-      const product = availableProducts.find(p => p.product_id === productId);
-      if (product) {
-        setSelectedProductsCache(prev => new Map(prev).set(productId, product));
-      }
-    }
   };
 
   const removeProduct = (productId: number) => {
@@ -163,7 +161,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     if (activeTab === "browse" || activeTab === "meals") {
       // Browse/meals tab: combine browse products + any added meal ingredients
       const browseItems = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
-        const product = selectedProductsCache.get(productId) ?? availableProducts.find(p => p.product_id === productId);
+        const product = productLookup.get(productId);
         if (!product) return [];
         return Array(qty).fill(product.title);
       });
@@ -199,7 +197,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       } else if (candidates.length > 1) {
         needsPicking.push({ rawInput: raw, candidates });
       }
-      // 0 candidates → leave unresolved (backend will mark as unmatched)
+      // 0 candidates â†’ leave unresolved (backend will mark as unmatched)
     }
 
     setResolvedTitles(newResolved);
@@ -208,7 +206,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       setDisambigQueue(needsPicking);
       setDisambigOpen(true);
     } else {
-      // Nothing to disambiguate — go straight to optimize
+      // Nothing to disambiguate â€” go straight to optimize
       const finalItems = rawItems.map((raw) => newResolved.get(raw) ?? raw);
       onOptimize(finalItems);
     }
@@ -235,7 +233,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   };
 
   const totalBrowseItems = Array.from(selectedItems.values()).reduce((sum, qty) => sum + qty, 0);
-  // manualItemCount reserved for Write List tab — const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
+  // manualItemCount reserved for Write List tab â€” const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
 
   const itemCount = totalBrowseItems + mealItems.length;
 
@@ -243,13 +241,13 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const cartTotal = useMemo(() => {
     let total = 0;
     selectedItems.forEach((qty, productId) => {
-      const product = availableProducts.find(p => p.product_id === productId);
+      const product = productLookup.get(productId);
       if (product && product.prices[store.chain]) {
         total += product.prices[store.chain] * qty;
       }
     });
     return total;
-  }, [selectedItems, store.chain]);
+  }, [selectedItems, store.chain, productLookup]);
 
   const budgetRemaining = budget > 0 ? budget - cartTotal : 0;
   const isOverBudget = budget > 0 && cartTotal > budget;
@@ -258,7 +256,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   // Check if adding a product would exceed budget
   const canAddProduct = (productId: number) => {
     if (budget === 0) return true; // No budget set
-    const product = availableProducts.find(p => p.product_id === productId);
+    const product = productLookup.get(productId);
     if (!product || !product.prices[store.chain]) return true;
     const newTotal = cartTotal + product.prices[store.chain];
     return newTotal <= budget;
@@ -279,10 +277,10 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-2`}>Build Your Grocery List</h2>
         <p className={`${largeText ? "text-lg" : "text-base"} text-gray-600`}>
-          📍 {store.name} - {store.city}, {store.state}
+          ðŸ“ {store.name} - {store.city}, {store.state}
         </p>
         <p className={`${largeText ? "text-lg" : "text-base"} text-gray-500 mt-1`}>
-          {preferStoreBrand ? "✓ Store brands preferred" : "Name brands selected"}
+          {preferStoreBrand ? "âœ“ Store brands preferred" : "Name brands selected"}
         </p>
       </div>
 
@@ -363,7 +361,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         {/* Budget Warning */}
         {isOverBudget && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <span className="text-red-600 text-xl">⚠️</span>
+            <span className="text-red-600 text-xl">âš ï¸</span>
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-800">Over Budget!</p>
               <p className="text-sm text-red-700">
@@ -375,7 +373,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
         {budget > 0 && budgetProgress >= 80 && !isOverBudget && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-            <span className="text-yellow-600 text-xl">💡</span>
+            <span className="text-yellow-600 text-xl">ðŸ’¡</span>
             <div className="flex-1">
               <p className="text-sm font-semibold text-yellow-800">Approaching Budget Limit</p>
               <p className="text-sm text-yellow-700">
@@ -400,7 +398,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               </div>
               <div className="text-left">
                 <h3 className="font-bold text-lg text-green-900">Today's Deals & Coupons</h3>
-                <p className="text-xs text-green-700">{coupons.length} deals available at {store.chain} — check before you shop!</p>
+                <p className="text-xs text-green-700">{coupons.length} deals available at {store.chain} â€” check before you shop!</p>
               </div>
             </div>
             {showCoupons ? (
@@ -465,7 +463,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                             {coupon.code}
                           </div>
                         )}
-                        <span className="text-xs text-green-700 font-semibold underline">View items →</span>
+                        <span className="text-xs text-green-700 font-semibold underline">View items â†’</span>
                       </div>
                     </div>
                   </button>
@@ -495,7 +493,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               </span>
             )}
           </button>
-          {/* Write List tab disabled — manual text entry removed from scope for now
+          {/* Write List tab disabled â€” manual text entry removed from scope for now
           <button
             onClick={() => setActiveTab("manual")}
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
@@ -608,7 +606,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                           {matchingCoupons.map(c => (
                             <div key={c.id} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
                               <Tag className="size-3" />
-                              {c.discount} — {c.title}
+                              {c.discount} â€” {c.title}
                             </div>
                           ))}
                         </div>
@@ -728,7 +726,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </div>
       )}
 
-      {/* Manual Tab Content — disabled, kept for future use
+      {/* Manual Tab Content â€” disabled, kept for future use
       {activeTab === "manual" && (
         <div className="bg-white rounded-b-lg shadow-md p-6">
           <label className="block mb-3 font-semibold text-lg">
