@@ -18,7 +18,17 @@ def optimize_shopping_list(input_items, store_chain, prefer_store_brand=False, b
     match_result = matcher.match(input_items, context.store_chain)
     optimized_list = planner.plan(match_result["matched_items"], context.store_chain)
 
+    base_total = 0.0
+    effective_total = 0.0
+    for m in match_result["matched_items"]:
+        p = m.get("product", {})
+        base_total += float(p.get("base_unit_price", 0.0) or 0.0)
+        effective_total += float(p.get("effective_unit_price", p.get("base_unit_price", 0.0)) or 0.0)
+
     return {
         "optimized_list": optimized_list,
         "unmatched_items": match_result["unmatched_items"],
+        "base_total_estimate": round(base_total, 2),
+        "effective_total_estimate": round(effective_total, 2),
+        "estimated_savings": round(base_total - effective_total, 2),
     }
