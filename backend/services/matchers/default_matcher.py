@@ -3,6 +3,9 @@ from services.matchers.common import items_available_at_store, match_candidates,
 
 
 class DefaultMatcher:
+    def __init__(self, coupon_mode: bool = False):
+        self.coupon_mode = coupon_mode
+
     def match(self, input_items: List[str], store_chain: str) -> Dict:
         items_at_store = items_available_at_store(store_chain)
         matched = []
@@ -15,7 +18,7 @@ class DefaultMatcher:
             if selected:
                 matched.append({
                     "raw_input": raw_input,
-                    "product": to_product_payload(selected),
+                    "product": to_product_payload(selected, store_chain=store_chain, coupon_mode=self.coupon_mode),
                 })
             else:
                 unmatched.append(raw_input)
