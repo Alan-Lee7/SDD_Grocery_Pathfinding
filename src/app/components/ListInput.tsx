@@ -35,6 +35,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [inputText, setInputText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Map<number, number>>(new Map());
+  const [selectedProductsCache, setSelectedProductsCache] = useState<Map<number, ProductData>>(new Map());
   const [mealItems, setMealItems] = useState<string[]>([]);
   const [addedMealIds, setAddedMealIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,6 +133,13 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     const currentQty = newMap.get(productId) || 0;
     newMap.set(productId, currentQty + 1);
     setSelectedItems(newMap);
+    // Cache the product data so it's available at optimize time regardless of current search/filter
+    if (!selectedProductsCache.has(productId)) {
+      const product = availableProducts.find(p => p.product_id === productId);
+      if (product) {
+        setSelectedProductsCache(prev => new Map(prev).set(productId, product));
+      }
+    }
   };
 
   const removeProduct = (productId: number) => {
@@ -155,7 +163,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     if (activeTab === "browse" || activeTab === "meals") {
       // Browse/meals tab: combine browse products + any added meal ingredients
       const browseItems = Array.from(selectedItems.entries()).flatMap(([productId, qty]) => {
-        const product = availableProducts.find(p => p.product_id === productId);
+        const product = selectedProductsCache.get(productId) ?? availableProducts.find(p => p.product_id === productId);
         if (!product) return [];
         return Array(qty).fill(product.title);
       });
