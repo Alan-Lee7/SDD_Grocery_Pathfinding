@@ -15,6 +15,12 @@ def items_available_at_store(store_chain: str) -> List[GroceryItem]:
 
 def match_candidates(raw_input: str, items_at_store: List[GroceryItem]) -> List[GroceryItem]:
     lowercase_input = raw_input.lower()
+
+    # Exact title match first — handles items selected directly from the browse UI
+    exact = [item for item in items_at_store if item.title.lower() == lowercase_input]
+    if exact:
+        return exact
+
     matching = []
     for item in items_at_store:
         keywords = json.loads(item.keywords) if item.keywords else []
