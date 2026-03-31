@@ -1,5 +1,13 @@
-import { ArrowLeft, Check, ExternalLink, MapPin, DollarSign, Package, TrendingDown } from "lucide-react";
+﻿import { ArrowLeft, Check, ExternalLink, MapPin, DollarSign, Package, TrendingDown } from "lucide-react";
 import { useState } from "react";
+
+interface AppliedCoupon {
+  coupon_code?: string;
+  title?: string;
+  discount?: string;
+  coupon_type?: string;
+  effective_unit_price?: number;
+}
 
 interface Product {
   product_id: number;
@@ -8,6 +16,9 @@ interface Product {
   image_url: string;
   affiliate_link: string;
   availability: "in_stock" | "out_of_stock" | "limited";
+  base_unit_price?: number;
+  effective_unit_price?: number;
+  applied_coupon?: AppliedCoupon;
 }
 
 interface ListItem {
@@ -30,6 +41,9 @@ interface OptimizedListData {
   };
   optimized_list: AisleGroup[];
   unmatched_items: string[];
+  base_total_estimate?: number;
+  effective_total_estimate?: number;
+  estimated_savings?: number;
 }
 
 interface OptimizedListProps {
@@ -100,10 +114,19 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
     return totals;
   };
 
-  const storeTotals = calculateStoreTotals();
-  const currentStoreTotal = storeTotals[data.store.chain] || 0;
+
+  const computedEffectiveTotal = data.optimized_list.reduce((sum, aisle) => {
+    return sum + aisle.items.reduce((s, item) => {
+      if (!item.product) return s;
+      const eff = item.product.effective_unit_price ?? item.product.prices[data.store.chain] ?? 0;
+      return s + eff;
+    }, 0);
+  }, 0);  const storeTotals = calculateStoreTotals();
+  const currentStoreBaseTotal = storeTotals[data.store.chain] || 0;
+  const currentStoreEffectiveTotal = data.effective_total_estimate ?? computedEffectiveTotal ?? currentStoreBaseTotal;
+  const currentStoreSavings = data.estimated_savings ?? Math.max(0, currentStoreBaseTotal - currentStoreEffectiveTotal);
   const cheapestStore = Object.entries(storeTotals).sort((a, b) => a[1] - b[1])[0];
-  const potentialSavings = currentStoreTotal - cheapestStore[1];
+  const potentialSavings = currentStoreBaseTotal - cheapestStore[1];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -145,7 +168,10 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
         <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
           <div>
             <p className="text-sm text-gray-600">Cart Total at {data.store.chain}</p>
-            <p className="text-3xl font-bold text-green-700">${currentStoreTotal.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-700">${currentStoreEffectiveTotal.toFixed(2)}</p>
+            {currentStoreSavings > 0 && (
+              <p className="text-sm text-green-700 font-semibold">Save ${currentStoreSavings.toFixed(2)} with coupons</p>
+            )}
           </div>
           <button
             onClick={() => setShowComparison(true)}
@@ -171,7 +197,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                 className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
                 aria-label="Close comparison"
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -348,7 +374,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                       <div className="flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1 font-semibold text-green-700">
                           <DollarSign className="size-4" />
-                          {(item.product.prices[data.store.chain] || 0).toFixed(2)}
+                          {(item.product.effective_unit_price ?? item.product.prices[data.store.chain] ?? 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -467,8 +493,13 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                             <div className="flex items-center gap-4 text-sm">
                               <span className="flex items-center gap-1 font-semibold text-green-700">
                                 <DollarSign className="size-4" />
-                                {(item.product.prices[data.store.chain] || 0).toFixed(2)}
+                                {(item.product.effective_unit_price ?? item.product.prices[data.store.chain] ?? 0).toFixed(2)}
                               </span>
+                              {item.product.applied_coupon && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded font-semibold">
+                                  {item.product.applied_coupon.discount || "Coupon"} applied
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -502,3 +533,5 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
     </div>
   );
 }
+
+

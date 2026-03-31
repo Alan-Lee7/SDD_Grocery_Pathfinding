@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Auth } from "./components/Auth";
 import { StoreSelector } from "./components/StoreSelector";
 import { ListInput } from "./components/ListInput";
@@ -64,7 +64,7 @@ export default function App() {
           setStep("store-selection");
         })
         .catch(() => {
-          // Token expired or invalid — clear it
+          // Token expired or invalid â€” clear it
           localStorage.removeItem("shopRoute_token");
         });
     }
@@ -92,7 +92,7 @@ export default function App() {
     if (!selectedStore) return;
     setIsOptimizing(true);
     try {
-      const result = await optimizeList(items, selectedStore.chain, preferStoreBrand);
+      const result = await optimizeList(items, selectedStore.chain, preferStoreBrand, true);
       setOptimizedData({
         store: {
           store_id: selectedStore.store_id,
@@ -117,7 +117,7 @@ export default function App() {
       const newStore = stores[0];
       if (!newStore) return;
       setSelectedStore(newStore);
-      const result = await optimizeList(optimizedData.rawItems, newChain, preferStoreBrand);
+      const result = await optimizeList(optimizedData.rawItems, newChain, preferStoreBrand, true);
       setOptimizedData({
         store: {
           store_id: newStore.store_id,
@@ -193,7 +193,7 @@ export default function App() {
                 className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
                 aria-label="Close settings"
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -272,3 +272,4 @@ export default function App() {
     </div>
   );
 }
+

@@ -14,12 +14,15 @@ def items_available_at_store(store_chain: str) -> List[GroceryItem]:
 
 
 def match_candidates(raw_input: str, items_at_store: List[GroceryItem]) -> List[GroceryItem]:
-    lowercase_input = raw_input.lower()
+    lowercase_input = (raw_input or "").strip().lower()
 
-    # Exact title match first — handles items selected directly from the browse UI
-    exact = [item for item in items_at_store if item.title.lower() == lowercase_input]
+    exact = [item for item in items_at_store if (item.title or "").strip().lower() == lowercase_input]
     if exact:
         return exact
+
+    title_hits = [item for item in items_at_store if lowercase_input and lowercase_input in (item.title or "").lower()]
+    if title_hits:
+        return title_hits
 
     matching = []
     for item in items_at_store:
@@ -80,15 +83,86 @@ def _effective_unit_price(base_price: float, coupon_type: str, discount: str) ->
     return None
 
 
-def best_coupon_for_item(item_id: int, store_chain: str, base_price: float) -> Optional[Dict]:
+# Hardcoded fallback rules matching seed_coupons.py intent.
+# Used when DB coupon-product links are missing/incomplete.
+HARD_COUPON_RULES = {
+    "Hannaford": [
+        {"contains": "artisan bread", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Hannaford Artisan Bread"},
+        {"contains": "orange juice", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Hannaford Orange Juice"},
+        {"contains": "chobani", "coupon_type": "bogo", "discount": "B2G1", "title": "Greek Yogurt Buy 2 Get 1 Free"},
+        {"contains": "nature valley", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Nature Valley Bars"},
+        {"contains": "pork chop", "coupon_type": "special", "discount": "2 for $10", "title": "Pork Chops 2 for $10"},
+        {"contains": "avocado", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Avocados"},
+        {"contains": "pasta", "coupon_type": "special", "discount": "3 for $4", "title": "Pasta 3 for $4"},
+    ],
+    "Walmart": [
+        {"contains": "milk", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Half Gallon of Milk"},
+        {"contains": "sandwich bread", "coupon_type": "special", "discount": "2 for $5", "title": "Bread 2 for $5"},
+        {"contains": "pasta sauce", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
+        {"contains": "chicken breast", "coupon_type": "special", "discount": "$2/lb", "title": "$2 Off Boneless Chicken Breast"},
+        {"contains": "eggs", "coupon_type": "special", "discount": "2 for $5", "title": "Eggs 2 for $5"},
+        {"contains": "cheerios", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Cheerios"},
+        {"contains": "pizza", "coupon_type": "special", "discount": "3 for $10", "title": "Frozen Pizza 3 for $10"},
+        {"contains": "banana", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Bananas"},
+    ],
+    "Aldi": [
+        {"contains": "ground beef", "coupon_type": "special", "discount": "2 for $11", "title": "Ground Beef 2 for $11"},
+        {"contains": "strawberr", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Strawberries"},
+        {"contains": "cheese", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Cheese"},
+        {"contains": "salmon", "coupon_type": "dollar", "discount": "$2", "title": "Salmon Fillet $2 Off"},
+        {"contains": "greek yogurt", "coupon_type": "special", "discount": "3 for $5", "title": "Greek Yogurt 3 for $5"},
+        {"contains": "eggs", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
+        {"contains": "bean", "coupon_type": "special", "discount": "3 for $5", "title": "Canned Beans 3 for $5"},
+        {"contains": "rotisserie chicken", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Rotisserie Chicken"},
+    ],
+    "Price Chopper": [
+        {"contains": "milk", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Milk Gallon"},
+        {"contains": "chicken breast", "coupon_type": "special", "discount": "2 for $16", "title": "Chicken Breast 2 for $16"},
+        {"contains": "pasta sauce", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
+        {"contains": "eggs", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
+        {"contains": "greek yogurt", "coupon_type": "special", "discount": "4 for $5", "title": "Yogurt 4 for $5"},
+        {"contains": "strawberr", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Fresh Strawberries"},
+        {"contains": "frozen", "coupon_type": "special", "discount": "3 for $15", "title": "Frozen Vegetables 3 for $15"},
+        {"contains": "sandwich bread", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Sandwich Bread"},
+    ],
+}
+
+
+def hardcoded_coupon_for_title(title: str, store_chain: str, base_price: float) -> Optional[Dict]:
+    t = (title or "").lower()
+    rules = HARD_COUPON_RULES.get(store_chain, [])
+
+    best = None
+    best_price = base_price
+    for r in rules:
+        if r["contains"] in t:
+            eff = _effective_unit_price(base_price, r["coupon_type"], r["discount"])
+            if eff is None:
+                continue
+            if eff < best_price:
+                best_price = eff
+                best = r
+
+    if not best:
+        return None
+
+    return {
+        "coupon_code": None,
+        "title": best["title"],
+        "discount": best["discount"],
+        "coupon_type": best["coupon_type"],
+        "effective_unit_price": round(best_price, 2),
+        "source": "hardcoded_fallback",
+    }
+
+
+def best_coupon_for_item(item: GroceryItem, store_chain: str, base_price: float) -> Optional[Dict]:
     coupons = (
         Coupon.query.join(Coupon.eligible_products)
         .filter(Coupon.store_chain == store_chain)
-        .filter_by(product_id=item_id)
+        .filter_by(product_id=item.id)
         .all()
     )
-    if not coupons:
-        return None
 
     best = None
     best_price = base_price
@@ -99,18 +173,21 @@ def best_coupon_for_item(item_id: int, store_chain: str, base_price: float) -> O
             continue
         if eff < best_price:
             best_price = eff
-            best = c
+            best = {
+                "coupon_code": c.coupon_code,
+                "title": c.title,
+                "discount": c.discount,
+                "coupon_type": c.coupon_type,
+                "effective_unit_price": round(eff, 2),
+                "source": "db_linked_coupon",
+            }
 
-    if best is None:
-        return None
+    # Fallback hardcoded matching by title if DB-linking doesn't yield a better coupon.
+    hard = hardcoded_coupon_for_title(item.title or "", store_chain, base_price)
+    if hard and hard["effective_unit_price"] < best_price:
+        best = hard
 
-    return {
-        "coupon_code": best.coupon_code,
-        "title": best.title,
-        "discount": best.discount,
-        "coupon_type": best.coupon_type,
-        "effective_unit_price": round(best_price, 2),
-    }
+    return best
 
 
 def to_product_payload(item: GroceryItem, store_chain: Optional[str] = None, coupon_mode: bool = False):
@@ -135,9 +212,10 @@ def to_product_payload(item: GroceryItem, store_chain: Optional[str] = None, cou
             payload["effective_unit_price"] = round(float(base), 2)
 
             if coupon_mode:
-                applied = best_coupon_for_item(item.id, store_chain, float(base))
+                applied = best_coupon_for_item(item, store_chain, float(base))
                 if applied:
                     payload["applied_coupon"] = applied
                     payload["effective_unit_price"] = applied["effective_unit_price"]
 
     return payload
+

@@ -1,4 +1,4 @@
-// Central API service — all calls to the Flask backend go through here.
+﻿// Central API service â€” all calls to the Flask backend go through here.
 // Vite proxies /api/* to http://localhost:5000 in development.
 
 const API_BASE = "/api";
@@ -18,7 +18,7 @@ async function handleResponse(res: Response) {
   return data;
 }
 
-// ── Auth ────────────────────────────────────────────────────────────────────
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface UserProfile {
   id: number;
@@ -67,7 +67,7 @@ export async function updateProfile(
   return handleResponse(res);
 }
 
-// ── Stores ───────────────────────────────────────────────────────────────────
+// â”€â”€ Stores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface StoreData {
   store_id: number;
@@ -88,7 +88,7 @@ export async function getStores(zip?: string, chain?: string): Promise<StoreData
   return handleResponse(res);
 }
 
-// ── Items ────────────────────────────────────────────────────────────────────
+// â”€â”€ Items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ProductData {
   product_id: number;
@@ -136,7 +136,7 @@ export async function getItems(options?: {
   return handleResponse(res);
 }
 
-// ── Coupons ──────────────────────────────────────────────────────────────────
+// â”€â”€ Coupons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CouponData {
   id: string;
@@ -159,7 +159,7 @@ export async function getCoupons(store: string): Promise<CouponData[]> {
   return handleResponse(res);
 }
 
-// ── Optimize ─────────────────────────────────────────────────────────────────
+// â”€â”€ Optimize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface OptimizeResult {
   optimized_list: Array<{
@@ -177,7 +177,8 @@ export interface OptimizeResult {
 export async function optimizeList(
   items: string[],
   storeChain: string,
-  preferStoreBrand: boolean
+  preferStoreBrand: boolean,
+  couponMode: boolean = false
 ): Promise<OptimizeResult> {
   const res = await fetch(`${API_BASE}/optimize/`, {
     method: "POST",
@@ -186,12 +187,13 @@ export async function optimizeList(
       items,
       store_chain: storeChain,
       prefer_store_brand: preferStoreBrand,
+      coupon_mode: couponMode,
     }),
   });
   return handleResponse(res);
 }
 
-// ── Cart ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Cart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CartData {
   id: number | null;
@@ -227,3 +229,4 @@ export async function clearCart(storeChain: string): Promise<void> {
   });
   await handleResponse(res);
 }
+
