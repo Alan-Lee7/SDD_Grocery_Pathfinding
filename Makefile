@@ -1,47 +1,44 @@
-# Makefile for SDD Grocery Pathfinding project
-
+# 1. OS Detection
 ifeq ($(OS),Windows_NT)
-    SHELL := cmd.exe
+    # Windows Settings
+    RM = del /f /q
+    RMDIR = rmdir /s /q
+    EXT = .install_done
+    # Use backslashes for Windows file paths if calling cmd built-ins
+    SENTINEL = node_modules\$(EXT)
+    CHECK_DIR = if exist
+else
+    # Unix/macOS Settings
+    RM = rm -f
+    RMDIR = rm -rf
+    EXT = .install_done
+    SENTINEL = node_modules/$(EXT)
+    CHECK_DIR = test -d
 endif
 
-# Variables
-NODE_MODS := node_modules
-PACKAGE_JSON := package.json
-SENTINEL := $(NODE_MODS)\.install_done
-
-# Determine package manager (pnpm or npm)
-PM := $(shell where pnpm >nul 2>&1 && echo pnpm || echo npm)
+# 2. Package Manager Detection (Fixed for Cross-Platform)
+PM := $(shell pnpm --version >/dev/null 2>&1 && echo pnpm || echo npm)
 
 all: dev
 
-# Track installation status
-$(SENTINEL): $(PACKAGE_JSON)
+# 3. Installation Logic
+$(SENTINEL): package.json
 	@echo [MAKE] Dependencies missing or package.json changed.
 	@echo [MAKE] Using $(PM) to install...
 	$(PM) install
-	@echo . > $(SENTINEL)
+	@echo done > $(SENTINEL)
 
-# Check to see if npm install is done
 dev: $(SENTINEL)
-	@if not exist "$(NODE_MODS)" ( \
-		echo [MAKE] node_modules folder missing. Reinstalling... && \
-		$(PM) install && \
-		echo . > $(SENTINEL) \
-	)
 	@echo [MAKE] Starting development server...
 	$(PM) run dev
 
-# Run the server
 build: $(SENTINEL)
 	@echo [MAKE] Building for production...
 	$(PM) run build
 
-# Clean build
 clean:
-	@if exist "$(NODE_MODS)" ( \
-		echo [MAKE] Removing node_modules... && \
-		rmdir /s /q "$(NODE_MODS)" \
-	)
-	@if exist "$(SENTINEL)" (del /f /q "$(SENTINEL)")
+	@echo [MAKE] Cleaning project...
+	$(RMDIR) node_modules
+	$(RM) $(SENTINEL)
 
 .PHONY: all dev build clean
