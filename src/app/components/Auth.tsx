@@ -68,7 +68,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="max-w-6xl w-full grid md:grid-cols-2 gap-8 items-center">
         {/* Left Side - Branding */}
         <div className="text-center md:text-left">
@@ -76,45 +76,45 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             <div className="size-16 bg-blue-600 rounded-2xl flex items-center justify-center">
               <ShoppingBag className="size-9 text-white" />
             </div>
-            <h1 className="text-5xl font-bold text-gray-900">Grocery Finder</h1>
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-gray-100">Grocery Finder</h1>
           </div>
 
-          <p className="text-2xl text-gray-700 mb-6">Shop smarter, not harder</p>
+          <p className="text-2xl text-gray-700 dark:text-gray-300 mb-6">Shop smarter, not harder</p>
 
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
             Transform your grocery list into an optimized shopping route. Save time, reduce
             backtracking, and never miss an item.
           </p>
 
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="size-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Check className="size-6 text-green-600" />
+              <div className="size-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0">
+                <Check className="size-6 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-gray-700">Supports Walmart, Aldi, Hannaford & more</p>
+              <p className="text-gray-700 dark:text-gray-300">Supports Walmart, Aldi, Hannaford & more</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="size-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Check className="size-6 text-green-600" />
+              <div className="size-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0">
+                <Check className="size-6 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-gray-700">Aisle-by-aisle organized shopping lists</p>
+              <p className="text-gray-700 dark:text-gray-300">Aisle-by-aisle organized shopping lists</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="size-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Check className="size-6 text-green-600" />
+              <div className="size-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0">
+                <Check className="size-6 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-gray-700">Save & reuse your favorite lists</p>
+              <p className="text-gray-700 dark:text-gray-300">Save & reuse your favorite lists</p>
             </div>
           </div>
         </div>
 
         {/* Right Side - Auth Form */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
           <div className="mb-6">
-            <h2 className="text-3xl font-bold mb-2">
+            <h2 className="text-3xl font-bold mb-2 dark:text-gray-100">
               {isSignUp ? "Create Account" : "Welcome Back"}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {isSignUp
                 ? "Sign up to start optimizing your shopping"
                 : "Sign in to continue shopping smarter"}
@@ -124,7 +124,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                   <input
@@ -132,14 +132,14 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                 <input
@@ -147,13 +147,13 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-5" />
                 <input
@@ -161,12 +161,12 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                 </button>
@@ -175,7 +175,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
 
             {isSignUp && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -185,12 +185,12 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                   </button>
@@ -199,13 +199,13 @@ export function Auth({ onAuthSuccess }: AuthProps) {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {successMessage && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg text-sm">
                 {successMessage}
               </div>
             )}
@@ -243,7 +243,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
 
           {!isSignUp && (
             <div className="mt-4 text-center">
-              <button className="text-sm text-gray-600 hover:text-gray-800">
+              <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 Forgot password?
               </button>
             </div>

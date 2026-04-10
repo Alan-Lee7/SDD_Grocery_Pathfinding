@@ -4,7 +4,7 @@ import { StoreSelector } from "./components/StoreSelector";
 import { ListInput } from "./components/ListInput";
 import { OptimizedList } from "./components/OptimizedList";
 import { optimizeList, getStores, getProfile, updateProfile, type StoreData } from "./api";
-import { LogOut, User as UserIcon, Settings, Type, DollarSign } from "lucide-react";
+import { LogOut, User as UserIcon, Settings, Type, DollarSign, Moon, Sun } from "lucide-react";
 
 interface User {
   email: string;
@@ -22,6 +22,9 @@ export default function App() {
   const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Accessibility and preference settings
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("shopRoute_darkMode") === "true";
+  });
   const [largeText, setLargeText] = useState(() => {
     return localStorage.getItem("shopRoute_largeText") === "true";
   });
@@ -34,6 +37,10 @@ export default function App() {
   });
 
   // Persist preferences locally (also synced to backend on change)
+  useEffect(() => {
+    localStorage.setItem("shopRoute_darkMode", String(darkMode));
+  }, [darkMode]);
+
   useEffect(() => {
     localStorage.setItem("shopRoute_largeText", String(largeText));
   }, [largeText]);
@@ -143,14 +150,21 @@ export default function App() {
   };
 
   if (step === "auth") {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
+    return (
+      <div className={darkMode ? "dark" : ""}>
+        <div className="dark:bg-gray-900">
+          <Auth onAuthSuccess={handleAuthSuccess} />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${largeText ? "text-lg" : ""}`}>
+    <div className={darkMode ? "dark" : ""}>
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 ${largeText ? "text-lg" : ""}`}>
       {/* Header */}
       {user && (
-        <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-blue-600`}>
               Grocery Finder
@@ -158,19 +172,19 @@ export default function App() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowSettings(true)}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 aria-label="Settings"
               >
                 <Settings className={largeText ? "size-6" : "size-5"} />
                 <span className={largeText ? "text-lg font-medium" : "font-medium"}>Settings</span>
               </button>
-              <div className="flex items-center gap-2 text-gray-700">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                 <UserIcon className={largeText ? "size-6" : "size-5"} />
                 <span className={largeText ? "text-lg font-medium" : "font-medium"}>{user.name}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <LogOut className={largeText ? "size-5" : "size-4"} />
                 <span className={largeText ? "text-lg" : ""}>Logout</span>
@@ -183,31 +197,62 @@ export default function App() {
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-gray-900`}>
+              <h2 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-gray-900 dark:text-gray-100`}>
                 Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl leading-none"
                 aria-label="Close settings"
               >
-                Ã—
+                ×
               </button>
             </div>
 
             <div className="space-y-6">
+              {/* Dark Mode Toggle */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    {darkMode
+                      ? <Moon className={largeText ? "size-6 text-blue-400" : "size-5 text-blue-400"} />
+                      : <Sun className={largeText ? "size-6 text-blue-600" : "size-5 text-blue-600"} />
+                    }
+                    <h3 className={`${largeText ? "text-xl" : "text-lg"} font-semibold text-gray-900 dark:text-gray-100`}>
+                      Dark Mode
+                    </h3>
+                  </div>
+                  <p className={`${largeText ? "text-lg" : "text-sm"} text-gray-600 dark:text-gray-400`}>
+                    Switch between light and dark theme
+                  </p>
+                </div>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                    darkMode ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                  aria-label="Toggle dark mode"
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                      darkMode ? "translate-x-7" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
               {/* Large Text Toggle */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Type className={largeText ? "size-6 text-blue-600" : "size-5 text-blue-600"} />
-                    <h3 className={`${largeText ? "text-xl" : "text-lg"} font-semibold text-gray-900`}>
+                    <h3 className={`${largeText ? "text-xl" : "text-lg"} font-semibold text-gray-900 dark:text-gray-100`}>
                       Large Text
                     </h3>
                   </div>
-                  <p className={`${largeText ? "text-lg" : "text-sm"} text-gray-600`}>
+                  <p className={`${largeText ? "text-lg" : "text-sm"} text-gray-600 dark:text-gray-400`}>
                     Make text larger for easier reading
                   </p>
                 </div>
@@ -269,6 +314,7 @@ export default function App() {
           />
         )}
       </div>
+    </div>
     </div>
   );
 }

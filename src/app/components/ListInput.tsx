@@ -24,7 +24,7 @@ interface ListInputProps {
   isOptimizing?: boolean;
 }
 
-type Tab = "browse" | "meals"; // "manual" tab disabled â€” kept for future use
+type Tab = "browse" | "meals"; // "manual" tab disabled — kept for future use
 
 interface DisambigItem {
   rawInput: string;
@@ -197,7 +197,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       } else if (candidates.length > 1) {
         needsPicking.push({ rawInput: raw, candidates });
       }
-      // 0 candidates â†’ leave unresolved (backend will mark as unmatched)
+      // 0 candidates → leave unresolved (backend will mark as unmatched)
     }
 
     setResolvedTitles(newResolved);
@@ -206,7 +206,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       setDisambigQueue(needsPicking);
       setDisambigOpen(true);
     } else {
-      // Nothing to disambiguate â€” go straight to optimize
+      // Nothing to disambiguate — go straight to optimize
       const finalItems = rawItems.map((raw) => newResolved.get(raw) ?? raw);
       onOptimize(finalItems);
     }
@@ -233,7 +233,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   };
 
   const totalBrowseItems = Array.from(selectedItems.values()).reduce((sum, qty) => sum + qty, 0);
-  // manualItemCount reserved for Write List tab â€” const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
+  // manualItemCount reserved for Write List tab — const manualItemCount = inputText.split("\n").filter((item) => item.trim().length > 0).length;
 
   const itemCount = totalBrowseItems + mealItems.length;
 
@@ -267,32 +267,32 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     <div className="max-w-6xl mx-auto pb-24">
       <button
         onClick={onBack}
-        className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
+        className={`flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
       >
         <ArrowLeft className={largeText ? "size-6" : "size-5"} />
         Change Store
       </button>
 
       {/* Store Info */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-2`}>Build Your Grocery List</h2>
-        <p className={`${largeText ? "text-lg" : "text-base"} text-gray-600`}>
-          ðŸ“ {store.name} - {store.city}, {store.state}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <h2 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-2 dark:text-gray-100`}>Build Your Grocery List</h2>
+        <p className={`${largeText ? "text-lg" : "text-base"} text-gray-600 dark:text-gray-400`}>
+          📍 {store.name} - {store.city}, {store.state}
         </p>
-        <p className={`${largeText ? "text-lg" : "text-base"} text-gray-500 mt-1`}>
-          {preferStoreBrand ? "âœ“ Store brands preferred" : "Name brands selected"}
+        <p className={`${largeText ? "text-lg" : "text-base"} text-gray-500 dark:text-gray-400 mt-1`}>
+          {preferStoreBrand ? "✓ Store brands preferred" : "Name brands selected"}
         </p>
       </div>
 
       {/* Budget Tracker */}
-      <div className={`bg-white rounded-lg shadow-md p-6 mb-6 ${isOverBudget ? "border-2 border-red-500" : budget > 0 ? "border-2 border-green-500" : ""}`}>
+      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 ${isOverBudget ? "border-2 border-red-500" : budget > 0 ? "border-2 border-green-500" : ""}`}>
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <label className="block mb-2 font-semibold text-lg flex items-center gap-2">
+            <label className="block mb-2 font-semibold text-lg flex items-center gap-2 dark:text-gray-100">
               <DollarSign className="size-5 text-green-600" />
               Shopping Budget
             </label>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
               Set a budget to keep your spending in check. We'll prevent adding items that exceed it.
             </p>
             <div className="flex gap-3 items-center">
@@ -305,7 +305,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   value={budget === 0 ? "" : budget}
                   onChange={(e) => setBudget && setBudget(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                 />
               </div>
               {budget > 0 && (
@@ -386,19 +386,19 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
       {/* Coupons & Deals Section */}
       {coupons.length > 0 && (
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md mb-6 border-2 border-green-300 overflow-hidden">
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg shadow-md mb-6 border-2 border-green-300 dark:border-green-700 overflow-hidden">
           {/* Collapsible header */}
           <button
             onClick={() => setShowCoupons(prev => !prev)}
-            className="w-full flex items-center justify-between p-4 hover:bg-green-100 transition-colors"
+            className="w-full flex items-center justify-between p-4 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-600 rounded-lg">
                 <Tag className="size-5 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg text-green-900">Today's Deals & Coupons</h3>
-                <p className="text-xs text-green-700">{coupons.length} deals available at {store.chain} â€” check before you shop!</p>
+                <h3 className="font-bold text-lg text-green-900 dark:text-green-400">Today's Deals & Coupons</h3>
+                <p className="text-xs text-green-700 dark:text-green-500">{coupons.length} deals available at {store.chain} — check before you shop!</p>
               </div>
             </div>
             {showCoupons ? (
@@ -415,7 +415,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   <button
                     key={coupon.id}
                     onClick={() => setActiveCoupon(coupon)}
-                    className="text-left bg-white rounded-lg p-4 border-2 border-dashed border-green-300 hover:border-green-500 hover:shadow-md transition-all w-full"
+                    className="text-left bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-dashed border-green-300 dark:border-green-700 hover:border-green-500 hover:shadow-md transition-all w-full"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -435,11 +435,11 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                               <Sparkles className="size-4 text-purple-700" />
                             </div>
                           )}
-                          <h4 className="font-bold text-gray-900">{coupon.title}</h4>
+                          <h4 className="font-bold text-gray-900 dark:text-gray-100">{coupon.title}</h4>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{coupon.description}</p>
                         {coupon.category && (
-                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mb-2">
+                          <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded mb-2">
                             {coupon.category}
                           </span>
                         )}
@@ -448,12 +448,12 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                         <div className="font-bold text-2xl text-green-700">
                           {coupon.discount}
                         </div>
-                        <div className="text-xs text-gray-500 uppercase">Off</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Off</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                         <Clock className="size-3" />
                         Expires {coupon.expiresIn}
                       </div>
@@ -463,7 +463,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                             {coupon.code}
                           </div>
                         )}
-                        <span className="text-xs text-green-700 font-semibold underline">View items â†’</span>
+                        <span className="text-xs text-green-700 font-semibold underline">View items →</span>
                       </div>
                     </div>
                   </button>
@@ -475,14 +475,14 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-t-lg shadow-md">
-        <div className="flex border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-md">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab("browse")}
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
               activeTab === "browse"
                 ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <Package className="size-5" />
@@ -493,7 +493,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               </span>
             )}
           </button>
-          {/* Write List tab disabled â€” manual text entry removed from scope for now
+          {/* Write List tab disabled — manual text entry removed from scope for now
           <button
             onClick={() => setActiveTab("manual")}
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
@@ -516,7 +516,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
             className={`flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-2 transition-colors ${
               activeTab === "meals"
                 ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <ChefHat className="size-5" />
@@ -532,12 +532,12 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
       {/* Browse Tab Content */}
       {activeTab === "browse" && (
-        <div className="bg-white rounded-b-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-b-lg shadow-md p-6">
           <div className="mb-6">
-            <label className="block mb-3 font-semibold text-lg">
+            <label className="block mb-3 font-semibold text-lg dark:text-gray-100">
               Browse & Add Products
             </label>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Browse products available at {store.chain} and add them to your list.
             </p>
 
@@ -550,7 +550,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 />
               </div>
 
@@ -558,7 +558,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -594,10 +594,10 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                       key={product.product_id}
                       className={`border rounded-lg p-4 transition-all ${
                         quantity > 0
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
                           : matchingCoupons.length > 0
-                          ? "border-green-400 bg-green-50 hover:border-green-500"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-green-400 bg-green-50 dark:bg-green-900/20 hover:border-green-500"
+                          : "border-gray-200 dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
                     >
                       {/* Deal banner */}
@@ -606,7 +606,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                           {matchingCoupons.map(c => (
                             <div key={c.id} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
                               <Tag className="size-3" />
-                              {c.discount} â€” {c.title}
+                              {c.discount} — {c.title}
                             </div>
                           ))}
                         </div>
@@ -617,7 +617,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                         className="w-full h-32 object-cover rounded-lg mb-3"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       />
-                      <h3 className="font-medium text-sm mb-1 line-clamp-2">{product.title}</h3>
+                      <h3 className="font-medium text-sm mb-1 line-clamp-2 dark:text-gray-100">{product.title}</h3>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-lg font-bold text-blue-600">
                           {product.prices[store.chain] != null
@@ -631,7 +631,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                         )}
                       </div>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
                           {product.category}
                         </span>
                         <span
@@ -704,7 +704,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   <button
                     onClick={loadMoreProducts}
                     disabled={isLoadingProducts}
-                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                    className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
                   >
                     {isLoadingProducts ? (
                       <><Loader2 className="size-4 animate-spin" /> Loading...</>
@@ -716,7 +716,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               )}
 
               {filteredProducts.length === 0 && !isLoadingProducts && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <Package className="size-12 mx-auto mb-2 opacity-50" />
                   <p>No products found matching your search.</p>
                 </div>
@@ -726,7 +726,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </div>
       )}
 
-      {/* Manual Tab Content â€” disabled, kept for future use
+      {/* Manual Tab Content — disabled, kept for future use
       {activeTab === "manual" && (
         <div className="bg-white rounded-b-lg shadow-md p-6">
           <label className="block mb-3 font-semibold text-lg">
@@ -754,11 +754,11 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
       {/* Meals Tab Content */}
       {activeTab === "meals" && (
-        <div className="bg-white rounded-b-lg shadow-md p-6">
-          <label className="block mb-3 font-semibold text-lg">
+        <div className="bg-white dark:bg-gray-800 rounded-b-lg shadow-md p-6">
+          <label className="block mb-3 font-semibold text-lg dark:text-gray-100">
             Choose a Meal Plan
           </label>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Select a pre-made meal and we'll add all the ingredients to your cart automatically.
           </p>
 
@@ -767,7 +767,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
             <select
               value={mealCategoryFilter}
               onChange={(e) => setMealCategoryFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               {getMealCategories().map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -781,7 +781,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
               return (
                 <div
                   key={meal.id}
-                  className="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-orange-400 transition-all hover:shadow-lg bg-white"
+                  className="border-2 border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:border-orange-400 transition-all hover:shadow-lg bg-white dark:bg-gray-800"
                 >
                   <img
                     src={meal.image}
@@ -790,14 +790,14 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                   />
                   <div className="p-5">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-xl text-gray-900">{meal.name}</h3>
-                      <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded">
+                      <h3 className="font-bold text-xl text-gray-900 dark:text-gray-100">{meal.name}</h3>
+                      <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 text-xs font-semibold rounded">
                         {meal.category}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-4">{meal.description}</p>
-                    
-                    <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{meal.description}</p>
+
+                    <div className="flex items-center gap-4 mb-4 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <Users className="size-4" />
                         <span>{meal.servings} servings</span>
@@ -809,10 +809,10 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                     </div>
 
                     <div className="mb-4">
-                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Ingredients ({meal.ingredients.length}):</h4>
+                      <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-2">Ingredients ({meal.ingredients.length}):</h4>
                       <div className="flex flex-wrap gap-2">
                         {meal.ingredients.map((ingredient, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          <span key={idx} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
                             {ingredient}
                           </span>
                         ))}
@@ -820,7 +820,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
                     </div>
                     
                     {addedMealIds.has(meal.id) ? (
-                      <div className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg text-sm font-semibold border border-green-300">
+                      <div className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-lg text-sm font-semibold border border-green-300 dark:border-green-700">
                         <CheckCircle className="size-5" />
                         Added to List
                       </div>
@@ -849,8 +849,8 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       )}
 
       {/* Bottom Action Bar - sticky */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg px-4 py-3 flex justify-between items-center">
-        <p className="text-sm text-gray-600">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg px-4 py-3 flex justify-between items-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           {itemCount} {itemCount === 1 ? "item" : "items"} in your list
         </p>
         <button

@@ -132,32 +132,32 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
     <div className="max-w-4xl mx-auto">
       <button
         onClick={onBack}
-        className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
+        className={`flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-4 transition-colors ${largeText ? "text-lg" : "text-base"}`}
       >
         <ArrowLeft className={largeText ? "size-6" : "size-5"} />
         New List
       </button>
 
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-1`}>Your Optimized Route</h1>
-            <p className={`text-gray-600 flex items-center gap-2 ${largeText ? "text-lg" : "text-base"}`}>
+            <h1 className={`${largeText ? "text-3xl" : "text-2xl"} font-bold mb-1 dark:text-gray-100`}>Your Optimized Route</h1>
+            <p className={`text-gray-600 dark:text-gray-400 flex items-center gap-2 ${largeText ? "text-lg" : "text-base"}`}>
               <MapPin className={largeText ? "size-5" : "size-4"} />
               {data.store.name}
             </p>
           </div>
           <div className="text-right">
-            <p className={`text-gray-600 ${largeText ? "text-lg" : "text-sm"}`}>Progress</p>
+            <p className={`text-gray-600 dark:text-gray-400 ${largeText ? "text-lg" : "text-sm"}`}>Progress</p>
             <p className={`${largeText ? "text-3xl" : "text-2xl"} font-bold text-blue-600`}>
               {checkedCount}/{totalItems}
             </p>
           </div>
         </div>
-        
+
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-4">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden mb-4">
           <div
             className="bg-blue-600 h-full transition-all duration-300 rounded-full"
             style={{ width: `${progress}%` }}
@@ -165,7 +165,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
         </div>
 
         {/* Cart Total and Compare Button */}
-        <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div>
             <p className="text-sm text-gray-600">Cart Total at {data.store.chain}</p>
             <p className="text-3xl font-bold text-green-700">${currentStoreEffectiveTotal.toFixed(2)}</p>
@@ -306,7 +306,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
       <div className="space-y-4">
         {/* Active Aisles */}
         {activeAisles.map(({ aisleGroup, originalIndex }) => (
-          <div key={originalIndex} className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div key={originalIndex} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             {/* Aisle Header */}
             <div className="bg-blue-600 text-white px-6 py-4">
               <div className="flex items-center justify-between">
@@ -322,15 +322,15 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
             </div>
 
             {/* Items in Aisle */}
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {aisleGroup.items.map((item, itemIdx) => {
                 const itemKey = `${originalIndex}-${itemIdx}`;
                 const isChecked = checkedItems.has(itemKey);
 
                 if (!item.product) {
                   return (
-                    <div key={itemIdx} className="p-4 bg-gray-50">
-                      <p className="text-gray-500 italic">
+                    <div key={itemIdx} className="p-4 bg-gray-50 dark:bg-gray-700">
+                      <p className="text-gray-500 dark:text-gray-400 italic">
                         No match found for: {item.raw_input}
                       </p>
                     </div>
@@ -340,7 +340,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                 return (
                   <div
                     key={itemIdx}
-                    className={`p-4 flex gap-4 hover:bg-gray-50 transition-colors ${
+                    className={`p-4 flex gap-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                       isChecked ? "opacity-50" : ""
                     }`}
                   >
@@ -365,10 +365,10 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
-                      <h4 className={`font-medium mb-1 ${isChecked ? "line-through" : ""}`}>
+                      <h4 className={`font-medium mb-1 dark:text-gray-100 ${isChecked ? "line-through" : ""}`}>
                         {item.product.title}
                       </h4>
-                      <p className="text-sm text-gray-500 mb-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                         Original: {item.raw_input}
                       </p>
                       <div className="flex items-center gap-4 text-sm">
@@ -398,16 +398,16 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
 
         {/* Unmatched Items */}
         {data.unmatched_items.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-orange-300">
-            <div className="bg-orange-100 text-orange-900 px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border-2 border-orange-300">
+            <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-900 dark:text-orange-300 px-6 py-4">
               <h3 className="text-xl font-bold">Unmatched Items</h3>
               <p className="text-sm mt-1">
                 We couldn't find these products. Try being more specific.
               </p>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {data.unmatched_items.map((item, idx) => (
-                <div key={idx} className="p-4 text-gray-700">
+                <div key={idx} className="p-4 text-gray-700 dark:text-gray-300">
                   • {item}
                 </div>
               ))}
@@ -420,7 +420,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
           <div className="mt-8 pt-8 border-t-4 border-green-200">
             <div className="flex items-center gap-3 mb-4">
               <Check className="size-6 text-green-600" />
-              <h2 className="text-2xl font-bold text-green-800">Items Grabbed</h2>
+              <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Items Grabbed</h2>
               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
                 {completedAisles.length} {completedAisles.length === 1 ? "aisle" : "aisles"} complete
               </span>
@@ -428,7 +428,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
 
             <div className="space-y-4">
               {completedAisles.map(({ aisleGroup, originalIndex }) => (
-                <div key={originalIndex} className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-green-300">
+                <div key={originalIndex} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border-2 border-green-300">
                   {/* Aisle Header */}
                   <div className="bg-green-600 text-white px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -447,7 +447,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                   </div>
 
                   {/* Items in Aisle */}
-                  <div className="divide-y divide-gray-200 bg-green-50">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700 bg-green-50 dark:bg-green-900/20">
                     {aisleGroup.items.map((item, itemIdx) => {
                       const itemKey = `${originalIndex}-${itemIdx}`;
                       const isChecked = checkedItems.has(itemKey);
@@ -525,8 +525,8 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
       </div>
 
       {/* Summary */}
-      <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-        <p className="text-sm text-green-800">
+      <div className="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <p className="text-sm text-green-800 dark:text-green-400">
           <strong>Route optimized!</strong> Follow the aisles from top to bottom to minimize backtracking.
         </p>
       </div>

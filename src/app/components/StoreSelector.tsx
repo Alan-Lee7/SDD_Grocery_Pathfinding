@@ -48,18 +48,18 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className={`${largeText ? "text-5xl" : "text-4xl"} font-bold mb-3`}>Grocery Finder</h1>
-        <p className={`${largeText ? "text-xl" : "text-lg"} text-gray-600`}>
+        <h1 className={`${largeText ? "text-5xl" : "text-4xl"} font-bold mb-3 dark:text-gray-100`}>Grocery Finder</h1>
+        <p className={`${largeText ? "text-xl" : "text-lg"} text-gray-600 dark:text-gray-400`}>
           Optimize your grocery shopping trip by aisle
         </p>
-        <p className={`${largeText ? "text-base" : "text-sm"} text-gray-500 mt-2`}>
+        <p className={`${largeText ? "text-base" : "text-sm"} text-gray-500 dark:text-gray-500 mt-2`}>
           Supports Walmart, Aldi, Hannaford & more
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <label
-          className={`block mb-2 ${largeText ? "text-xl" : "text-base"} font-medium`}
+          className={`block mb-2 ${largeText ? "text-xl" : "text-base"} font-medium dark:text-gray-100`}
         >
           Find Nearby Grocery Stores
         </label>
@@ -76,7 +76,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
               value={zipCode}
               onChange={(e) => setZipCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && zipCode.length === 5 && handleSearch()}
-              className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
+              className={`w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
                 largeText ? "text-xl" : "text-base"
               }`}
               maxLength={5}
@@ -102,10 +102,10 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
       {stores.length > 0 && (
         <>
           {/* Store Chain Filter */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
             <div className="flex items-center gap-2 mb-3">
-              <Filter className={largeText ? "size-6" : "size-5"} />
-              <span className={`${largeText ? "text-xl" : "text-base"} font-medium`}>
+              <Filter className={`${largeText ? "size-6" : "size-5"} dark:text-gray-300`} />
+              <span className={`${largeText ? "text-xl" : "text-base"} font-medium dark:text-gray-100`}>
                 Filter by Store:
               </span>
             </div>
@@ -119,7 +119,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
                   } font-medium transition-colors ${
                     selectedChain === chain
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
                 >
                   {chain}
@@ -129,7 +129,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
           </div>
 
           <div className="space-y-3">
-            <h2 className={`font-semibold ${largeText ? "text-2xl" : "text-lg"}`}>
+            <h2 className={`font-semibold ${largeText ? "text-2xl" : "text-lg"} dark:text-gray-100`}>
               {filteredStores.length}{" "}
               {filteredStores.length === 1 ? "Store" : "Stores"} Found
             </h2>
@@ -137,7 +137,7 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
               <button
                 key={store.store_id}
                 onClick={() => onStoreSelected(store)}
-                className="w-full bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow text-left group"
+                className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow text-left group"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex items-start gap-3 flex-1">
@@ -152,19 +152,19 @@ export function StoreSelector({ onStoreSelected, largeText = false }: StoreSelec
                       <h3
                         className={`font-semibold ${
                           largeText ? "text-2xl" : "text-lg"
-                        } group-hover:text-blue-600 transition-colors`}
+                        } dark:text-gray-100 group-hover:text-blue-600 transition-colors`}
                       >
                         {store.name}
                       </h3>
                       <p
-                        className={`text-gray-600 ${largeText ? "text-base" : "text-sm"} mt-1`}
+                        className={`text-gray-600 dark:text-gray-400 ${largeText ? "text-base" : "text-sm"} mt-1`}
                       >
                         {store.address}, {store.city}, {store.state} {store.zip}
                       </p>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className={`${largeText ? "text-base" : "text-sm"} text-gray-500`}>
+                    <p className={`${largeText ? "text-base" : "text-sm"} text-gray-500 dark:text-gray-400`}>
                       {store.distance} mi
                     </p>
                   </div>
