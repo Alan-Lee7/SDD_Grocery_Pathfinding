@@ -1,5 +1,6 @@
 ﻿import { ArrowLeft, Check, ExternalLink, MapPin, DollarSign, Package, TrendingDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { optimizeList } from "../api";
 
 interface AppliedCoupon {
   coupon_code?: string;
@@ -41,6 +42,7 @@ interface OptimizedListData {
   };
   optimized_list: AisleGroup[];
   unmatched_items: string[];
+  rawItems?: string[];
   base_total_estimate?: number;
   effective_total_estimate?: number;
   estimated_savings?: number;
@@ -50,12 +52,15 @@ interface OptimizedListProps {
   data: OptimizedListData;
   onBack: () => void;
   largeText?: boolean;
+  preferStoreBrand?: boolean;
   onStoreSwitch?: (chain: string) => void;
 }
 
-export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }: OptimizedListProps) {
+export function OptimizedList({ data, onBack, largeText = false, preferStoreBrand = false, onStoreSwitch }: OptimizedListProps) {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
+  const [comparisonData, setComparisonData] = useState<Record<string, { total: number; savings: number }>>({});
+  const [loadingComparison, setLoadingComparison] = useState(false);
 
   const toggleCheck = (itemKey: string) => {
     const newChecked = new Set(checkedItems);
@@ -94,25 +99,44 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
   const checkedCount = checkedItems.size;
   const progress = (checkedCount / totalItems) * 100;
 
-  // Calculate total cost for each store
-  const calculateStoreTotals = () => {
-    const stores = ["Walmart", "Aldi", "Hannaford"];
-    const totals: Record<string, number> = {};
-    
-    stores.forEach(store => {
+  // All stores derived from product price keys
+  const allStores = useMemo(() => {
+    const set = new Set<string>();
+    data.optimized_list.forEach(ag => ag.items.forEach(item => {
+      if (item.product) Object.keys(item.product.prices).forEach(s => set.add(s));
+    }));
+    set.add(data.store.chain);
+    return [...set];
+  }, [data]);
+
+  // Run full optimize (with coupons) for each comparison store when modal opens
+  useEffect(() => {
+    if (!showComparison || !data.rawItems?.length) return;
+    const storesToFetch = allStores.filter(s => s !== data.store.chain);
+    setComparisonData({});
+    if (!storesToFetch.length) return;
+    setLoadingComparison(true);
+    Promise.all(storesToFetch.map(async store => {
+      const result = await optimizeList(data.rawItems!, store, preferStoreBrand, true);
       let total = 0;
-      data.optimized_list.forEach(aisleGroup => {
-        aisleGroup.items.forEach(item => {
-          if (item.product && item.product.prices[store]) {
-            total += item.product.prices[store];
-          }
+      let baseTotal = 0;
+      result.optimized_list.forEach(ag => {
+        ag.items.forEach(item => {
+          if (!item.product) return;
+          total += (item.product as any).effective_unit_price ?? item.product.prices[store] ?? 0;
+          baseTotal += item.product.prices[store] ?? 0;
         });
       });
-      totals[store] = total;
-    });
-    
-    return totals;
-  };
+      return { store, total, savings: Math.max(0, baseTotal - total) };
+    }))
+      .then(results => {
+        const map: Record<string, { total: number; savings: number }> = {};
+        results.forEach(({ store, total, savings }) => { map[store] = { total, savings }; });
+        setComparisonData(map);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingComparison(false));
+  }, [showComparison, data.store.chain]);
 
 
   const computedEffectiveTotal = data.optimized_list.reduce((sum, aisle) => {
@@ -121,12 +145,26 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
       const eff = item.product.effective_unit_price ?? item.product.prices[data.store.chain] ?? 0;
       return s + eff;
     }, 0);
-  }, 0);  const storeTotals = calculateStoreTotals();
-  const currentStoreBaseTotal = storeTotals[data.store.chain] || 0;
-  const currentStoreEffectiveTotal = data.effective_total_estimate ?? computedEffectiveTotal ?? currentStoreBaseTotal;
+  }, 0);
+
+  const computedBaseTotal = data.optimized_list.reduce((sum, aisle) => {
+    return sum + aisle.items.reduce((s, item) => {
+      if (!item.product) return s;
+      return s + (item.product.prices[data.store.chain] ?? 0);
+    }, 0);
+  }, 0);
+
+  const currentStoreEffectiveTotal = data.effective_total_estimate ?? computedEffectiveTotal;
+  const currentStoreBaseTotal = data.base_total_estimate ?? computedBaseTotal;
   const currentStoreSavings = data.estimated_savings ?? Math.max(0, currentStoreBaseTotal - currentStoreEffectiveTotal);
+
+  const storeTotals: Record<string, number> = {
+    [data.store.chain]: currentStoreEffectiveTotal,
+    ...Object.fromEntries(Object.entries(comparisonData).map(([s, d]) => [s, d.total])),
+  };
+
   const cheapestStore = Object.entries(storeTotals).sort((a, b) => a[1] - b[1])[0];
-  const potentialSavings = currentStoreBaseTotal - cheapestStore[1];
+  const potentialSavings = currentStoreEffectiveTotal - cheapestStore[1];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -186,29 +224,35 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
       {/* Price Comparison Modal */}
       {showComparison && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Store Price Comparison</h2>
-                <p className="text-sm text-gray-600 mt-1">See how much your cart costs at different stores</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Store Price Comparison</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">See how much your cart costs at different stores</p>
               </div>
               <button
                 onClick={() => setShowComparison(false)}
-                className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-3xl leading-none"
                 aria-label="Close comparison"
               >
-                Ã—
+                &times;
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto dark:bg-gray-800">
+              {loadingComparison && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">Loading coupon data...</p>
+              )}
               <div className="grid gap-4">
                 {Object.entries(storeTotals)
                   .sort((a, b) => a[1] - b[1])
                   .map(([storeName, total], index) => {
                     const isCurrent = storeName === data.store.chain;
                     const isCheapest = index === 0;
-                    const savingsVsCurrent = isCurrent ? 0 : currentStoreTotal - total;
+                    const savingsVsCurrent = isCurrent ? 0 : currentStoreEffectiveTotal - total;
+                    const storeCouponSavings = isCurrent
+                      ? currentStoreSavings
+                      : (comparisonData[storeName]?.savings ?? 0);
                     
                     return (
                       <button
@@ -222,17 +266,17 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                         disabled={isCurrent}
                         className={`p-5 rounded-lg border-2 transition-all text-left ${
                           isCheapest
-                            ? "bg-green-50 border-green-500"
+                            ? "bg-green-50 dark:bg-green-900/30 border-green-500"
                             : isCurrent
-                            ? "bg-blue-50 border-blue-500"
-                            : "bg-white border-gray-200 hover:border-purple-500 hover:shadow-lg cursor-pointer"
+                            ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500"
+                            : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-purple-500 hover:shadow-lg cursor-pointer"
                         } ${isCurrent ? "cursor-default" : ""}`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-xl font-bold text-gray-900">{storeName}</h3>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{storeName}</h3>
                                 {isCheapest && (
                                   <span className="px-2 py-1 bg-green-600 text-white text-xs font-bold rounded">
                                     BEST PRICE
@@ -244,6 +288,11 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
                                   </span>
                                 )}
                               </div>
+                              {storeCouponSavings > 0 && (
+                                <p className="text-sm text-green-700 dark:text-green-400 font-semibold">
+                                  Includes ${storeCouponSavings.toFixed(2)} coupon savings
+                                </p>
+                              )}
                               {!isCurrent && savingsVsCurrent > 0 && (
                                 <p className="text-sm text-green-700 font-semibold">
                                   Save ${savingsVsCurrent.toFixed(2)} vs {data.store.chain}
@@ -290,7 +339,7 @@ export function OptimizedList({ data, onBack, largeText = false, onStoreSwitch }
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-800">
               <button
                 onClick={() => setShowComparison(false)}
                 className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"

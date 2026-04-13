@@ -87,55 +87,62 @@ def _effective_unit_price(base_price: float, coupon_type: str, discount: str) ->
 # Used when DB coupon-product links are missing/incomplete.
 HARD_COUPON_RULES = {
     "Hannaford": [
-        {"contains": "artisan bread", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Hannaford Artisan Bread"},
-        {"contains": "orange juice", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Hannaford Orange Juice"},
-        {"contains": "chobani", "coupon_type": "bogo", "discount": "B2G1", "title": "Greek Yogurt Buy 2 Get 1 Free"},
-        {"contains": "nature valley", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Nature Valley Bars"},
-        {"contains": "pork chop", "coupon_type": "special", "discount": "2 for $10", "title": "Pork Chops 2 for $10"},
-        {"contains": "avocado", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Avocados"},
-        {"contains": "pasta", "coupon_type": "special", "discount": "3 for $4", "title": "Pasta 3 for $4"},
+        {"contains": "artisan bread", "category": "Bakery", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Hannaford Artisan Bread"},
+        {"contains": "orange juice", "category": "Beverages", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Hannaford Orange Juice"},
+        {"contains": "chobani", "category": "Dairy", "coupon_type": "bogo", "discount": "B2G1", "title": "Greek Yogurt Buy 2 Get 1 Free"},
+        {"contains": "nature valley", "category": "Pantry", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Nature Valley Bars"},
+        {"contains": "pork chop", "category": "Meat", "coupon_type": "special", "discount": "2 for $10", "title": "Pork Chops 2 for $10"},
+        {"contains": "avocado", "category": "Produce", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Avocados"},
+        {"contains": "pasta", "category": "Pantry", "coupon_type": "special", "discount": "3 for $4", "title": "Pasta 3 for $4"},
     ],
     "Walmart": [
-        {"contains": "milk", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Half Gallon of Milk"},
-        {"contains": "sandwich bread", "coupon_type": "special", "discount": "2 for $5", "title": "Bread 2 for $5"},
-        {"contains": "pasta sauce", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
-        {"contains": "chicken breast", "coupon_type": "special", "discount": "$2/lb", "title": "$2 Off Boneless Chicken Breast"},
-        {"contains": "eggs", "coupon_type": "special", "discount": "2 for $5", "title": "Eggs 2 for $5"},
-        {"contains": "cheerios", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Cheerios"},
-        {"contains": "pizza", "coupon_type": "special", "discount": "3 for $10", "title": "Frozen Pizza 3 for $10"},
-        {"contains": "banana", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Bananas"},
+        {"contains": "milk", "category": "Dairy", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Half Gallon of Milk"},
+        {"contains": "sandwich bread", "category": "Bakery", "coupon_type": "special", "discount": "2 for $5", "title": "Bread 2 for $5"},
+        {"contains": "pasta sauce", "category": "Pantry", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
+        {"contains": "chicken breast", "category": "Meat", "coupon_type": "special", "discount": "$2/lb", "title": "$2 Off Boneless Chicken Breast"},
+        {"contains": "eggs", "category": "Dairy", "coupon_type": "special", "discount": "2 for $5", "title": "Eggs 2 for $5"},
+        {"contains": "cheerios", "category": "Pantry", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Cheerios"},
+        {"contains": "pizza", "category": "Frozen", "coupon_type": "special", "discount": "3 for $10", "title": "Frozen Pizza 3 for $10"},
+        {"contains": "bananas", "category": "Produce", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Bananas"},
     ],
     "Aldi": [
-        {"contains": "ground beef", "coupon_type": "special", "discount": "2 for $11", "title": "Ground Beef 2 for $11"},
-        {"contains": "strawberr", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Strawberries"},
-        {"contains": "cheese", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Cheese"},
-        {"contains": "salmon", "coupon_type": "dollar", "discount": "$2", "title": "Salmon Fillet $2 Off"},
-        {"contains": "greek yogurt", "coupon_type": "special", "discount": "3 for $5", "title": "Greek Yogurt 3 for $5"},
-        {"contains": "eggs", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
-        {"contains": "bean", "coupon_type": "special", "discount": "3 for $5", "title": "Canned Beans 3 for $5"},
-        {"contains": "rotisserie chicken", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Rotisserie Chicken"},
+        {"contains": "ground beef", "category": "Meat", "coupon_type": "special", "discount": "2 for $11", "title": "Ground Beef 2 for $11"},
+        {"contains": "strawberr", "partial": True, "category": "Produce", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Strawberries"},
+        {"contains": "cheese", "category": "Dairy", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Cheese"},
+        {"contains": "salmon", "category": "Seafood", "coupon_type": "dollar", "discount": "$2", "title": "Salmon Fillet $2 Off"},
+        {"contains": "chobani", "category": "Dairy", "coupon_type": "special", "discount": "3 for $5", "title": "Greek Yogurt 3 for $5"},
+        {"contains": "eggs", "category": "Dairy", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
+        {"contains": "bean", "partial": True, "category": "Pantry", "coupon_type": "special", "discount": "3 for $5", "title": "Canned Beans 3 for $5"},
+        {"contains": "rotisserie chicken", "category": "Meat", "coupon_type": "dollar", "discount": "$2", "title": "$2 Off Rotisserie Chicken"},
     ],
     "Price Chopper": [
-        {"contains": "milk", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Milk Gallon"},
-        {"contains": "chicken breast", "coupon_type": "special", "discount": "2 for $16", "title": "Chicken Breast 2 for $16"},
-        {"contains": "pasta sauce", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
-        {"contains": "eggs", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
-        {"contains": "greek yogurt", "coupon_type": "special", "discount": "4 for $5", "title": "Yogurt 4 for $5"},
-        {"contains": "strawberr", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Fresh Strawberries"},
-        {"contains": "frozen", "coupon_type": "special", "discount": "3 for $15", "title": "Frozen Vegetables 3 for $15"},
-        {"contains": "sandwich bread", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Sandwich Bread"},
+        {"contains": "milk", "category": "Dairy", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Milk Gallon"},
+        {"contains": "chicken breast", "category": "Meat", "coupon_type": "special", "discount": "2 for $16", "title": "Chicken Breast 2 for $16"},
+        {"contains": "pasta sauce", "category": "Pantry", "coupon_type": "bogo", "discount": "BOGO", "title": "BOGO Pasta Sauce"},
+        {"contains": "eggs", "category": "Dairy", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Dozen Eggs"},
+        {"contains": "greek yogurt", "category": "Dairy", "coupon_type": "special", "discount": "4 for $5", "title": "Yogurt 4 for $5"},
+        {"contains": "strawberr", "partial": True, "category": "Produce", "coupon_type": "dollar", "discount": "$1", "title": "$1 Off Fresh Strawberries"},
+        {"contains": "frozen", "category": "Frozen", "coupon_type": "special", "discount": "3 for $15", "title": "Frozen Vegetables 3 for $15"},
+        {"contains": "sandwich bread", "category": "Bakery", "coupon_type": "dollar", "discount": "$1.50", "title": "$1.50 Off Sandwich Bread"},
     ],
 }
 
 
-def hardcoded_coupon_for_title(title: str, store_chain: str, base_price: float) -> Optional[Dict]:
+def hardcoded_coupon_for_title(title: str, store_chain: str, base_price: float, category: str = None) -> Optional[Dict]:
     t = (title or "").lower()
     rules = HARD_COUPON_RULES.get(store_chain, [])
 
     best = None
     best_price = base_price
     for r in rules:
-        if r["contains"] in t:
+        # Skip rule if it specifies a category and the product category doesn't match
+        if r.get("category") and category and r["category"].lower() != (category or "").lower():
+            continue
+        if r.get("partial"):
+            matched = r["contains"] in t
+        else:
+            matched = bool(re.search(r'\b' + re.escape(r["contains"]) + r'\b', t))
+        if matched:
             eff = _effective_unit_price(base_price, r["coupon_type"], r["discount"])
             if eff is None:
                 continue
@@ -183,7 +190,7 @@ def best_coupon_for_item(item: GroceryItem, store_chain: str, base_price: float)
             }
 
     # Fallback hardcoded matching by title if DB-linking doesn't yield a better coupon.
-    hard = hardcoded_coupon_for_title(item.title or "", store_chain, base_price)
+    hard = hardcoded_coupon_for_title(item.title or "", store_chain, base_price, category=item.category)
     if hard and hard["effective_unit_price"] < best_price:
         best = hard
 

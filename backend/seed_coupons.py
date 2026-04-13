@@ -160,8 +160,8 @@ COUPONS = {
             "category": "Dairy",
             "expires_in": "6 days",
             "coupon_type": "special",
-            "keywords": "greek yogurt",
-            "max_products": 1,
+            "keywords": "chobani greek yogurt drink",
+            "max_products": 3,
         },
         {
             "coupon_code": None,
@@ -345,6 +345,7 @@ COUPONS = {
             "coupon_type": "special",
             "keywords": "greek yogurt",
             "max_products": 3,
+            "max_price": 3.00,
         },
         {
             "coupon_code": None,
@@ -383,9 +384,9 @@ COUPONS = {
 }
 
 
-def find_products_for_coupon(chain, keywords, category, max_results=2, exact_titles=None):
+def find_products_for_coupon(chain, keywords, category, max_results=2, exact_titles=None, max_price=None):
     """Return up to max_results GroceryItem IDs that best match the coupon keywords."""
-    from models import ItemStoreAvailability
+    from models import ItemStoreAvailability, ItemPrice
 
     # If exact titles are provided, look those up directly and skip keyword search
     if exact_titles:
@@ -397,7 +398,7 @@ def find_products_for_coupon(chain, keywords, category, max_results=2, exact_tit
             if item:
                 ids.append(item.id)
             else:
-                print(f"    WARNING: exact title not found: {t!r}")
+                print(f"    WARNING: exact title not found: {t!r}".encode("ascii", "replace").decode("ascii"))
         return ids
 
     if not keywords:
@@ -410,6 +411,9 @@ def find_products_for_coupon(chain, keywords, category, max_results=2, exact_tit
         q = GroceryItem.query.filter(GroceryItem.id.in_(available_ids))
         if cat:
             q = q.filter_by(category=cat)
+        if max_price is not None:
+            q = q.join(ItemPrice, (ItemPrice.item_id == GroceryItem.id) & (ItemPrice.store_chain == chain))
+            q = q.filter(ItemPrice.price <= max_price)
         return q
 
     # 1. Try exact phrase match in the given category
@@ -471,15 +475,16 @@ def seed():
                     chain, deal.get("keywords"), deal.get("category"),
                     max_results=deal.get("max_products", 2),
                     exact_titles=deal.get("exact_titles"),
+                    max_price=deal.get("max_price"),
                 )
                 for pid in product_ids:
                     db.session.add(CouponProduct(coupon_id=coupon.id, product_id=pid))
                     linked += 1
 
                 if product_ids:
-                    print(f"  [{chain}] '{deal['title']}' → product IDs {product_ids}")
+                    print(f"  [{chain}] '{deal['title']}' -> product IDs {product_ids}")
                 else:
-                    print(f"  [{chain}] '{deal['title']}' → no matching products found")
+                    print(f"  [{chain}] '{deal['title']}' -> no matching products found")
 
                 inserted += 1
 

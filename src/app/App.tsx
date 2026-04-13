@@ -310,6 +310,7 @@ export default function App() {
             data={optimizedData}
             onBack={handleBack}
             largeText={largeText}
+            preferStoreBrand={preferStoreBrand}
             onStoreSwitch={handleStoreSwitch}
           />
         )}

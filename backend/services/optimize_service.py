@@ -1,4 +1,5 @@
-﻿from collections import Counter
+﻿import re
+from collections import Counter, defaultdict
 from services.interfaces import OptimizeContext
 from factories.matcher_factory import AdvancedMatcherFactory
 from factories.planner_factory import DefaultAislePlannerFactory, AccessibilityAislePlannerFactory
@@ -9,6 +10,12 @@ BREAD_COUPON_TITLES = {
     "the rustik oven artisan style sourdough bread",
 }
 SHRIMP_TITLE = "cox's 41/50 wild-caught key west pink raw shrimp"
+
+
+def _parse_min_qty(discount: str) -> int:
+    """Return the minimum quantity required for an 'X for $Y' deal, or 1 if not applicable."""
+    m = re.search(r'(\d+)\s*for\s*\$', discount or '', re.IGNORECASE)
+    return int(m.group(1)) if m else 1
 
 
 def apply_cart_level_coupon_overrides(matched_items, store_chain: str, coupon_mode: bool):
@@ -48,6 +55,24 @@ def apply_cart_level_coupon_overrides(matched_items, store_chain: str, coupon_mo
                 "effective_unit_price": round(eff, 2),
                 "source": "hardcoded_cart_override",
             }
+
+    # Enforce minimum quantity for all "X for $Y" special coupons applied per-item.
+    # Group items by the coupon title they received.
+    coupon_groups: dict = defaultdict(list)
+    for m in matched_items:
+        p = m.get("product", {})
+        coupon = p.get("applied_coupon")
+        if coupon and coupon.get("coupon_type") == "special":
+            coupon_groups[coupon["title"]].append(p)
+
+    for coupon_title, products in coupon_groups.items():
+        discount = (products[0].get("applied_coupon") or {}).get("discount", "")
+        min_qty = _parse_min_qty(discount)
+        if min_qty > 1 and len(products) < min_qty:
+            # Not enough items to qualify — revert each to its base price
+            for p in products:
+                p["effective_unit_price"] = p.get("base_unit_price", p.get("effective_unit_price"))
+                p.pop("applied_coupon", None)
 
 
 def optimize_shopping_list(input_items, store_chain, prefer_store_brand=False, budget=0.0, coupon_mode=False, accessibility_mode=False):
