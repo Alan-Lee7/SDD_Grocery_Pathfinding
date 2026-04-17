@@ -1,5 +1,6 @@
-﻿# SDD_Grocery_Pathfinding
+﻿# SDD_Grocery_Pathfinding by Vibe Coders
 Spring 2026 SD&D Grocery Pathfinding
+Team members: Alan, Peijing, Will, Sebastian
 
 ## Running the app
 
