@@ -57,28 +57,95 @@ CHAIN_PRICE_MULTIPLIERS = {
 # Kroger category →  model's category string mapping
 # ---------------------------------------------------------------------------
 CATEGORY_MAP = {
+    # Perishables / fresh departments
     "Produce":              "Produce",
+    "Organic":              "Produce",
+    "Natural":              "Produce",
     "Bakery":               "Bakery",
+    "Bread":                "Bakery",
+    "Tortilla":             "Bakery",
     "Deli":                 "Deli",
+    "Prepared Foods":       "Deli",
     "Meat":                 "Meat",
+    "Poultry":              "Meat",
     "Seafood":              "Seafood",
+    "Fish":                 "Seafood",
     "Dairy":                "Dairy",
+    "Cheese":               "Dairy",
+    "Eggs":                 "Dairy",
+    "Milk":                 "Dairy",
+    # Frozen
     "Frozen":               "Frozen",
+    # Beverages
     "Beverages":            "Beverages",
+    "Juice":                "Beverages",
+    "Water":                "Beverages",
+    "Coffee":               "Beverages",
+    "Tea":                  "Beverages",
+    "Soft Drink":           "Beverages",
+    "Energy Drink":         "Beverages",
+    "Sports Drink":         "Beverages",
+    # Snacks — must be checked before "Breakfast" to avoid granola bars → Cereal
     "Snacks":               "Snacks",
+    "Candy":                "Snacks",
+    "Chips":                "Snacks",
+    "Crackers":             "Snacks",
+    "Cookies":              "Snacks",
+    "Nuts":                 "Snacks",
+    # Cereal / Breakfast
     "Breakfast":            "Cereal",
     "Cereal":               "Cereal",
-    "Canned":               "Canned Goods",
+    "Oatmeal":              "Cereal",
+    "Granola":              "Cereal",
+    # Pasta / Rice / Dry Packaged Meals — ordered before "Canned" to take priority
     "Pasta":                "Pasta",
+    "Rice":                 "Pasta",
+    "Grains":               "Pasta",
+    "Noodles":              "Pasta",
+    "Side Dish":            "Pasta",      # instant mashed potatoes, stuffing, etc.
+    "Boxed Dinner":         "Pasta",
+    "Boxed Meals":          "Pasta",
+    "Mac":                  "Pasta",
+    "Potatoes":             "Pasta",
+    # Canned / Jarred Goods — only truly canned/jarred shelf-stable products
+    "Canned Goods":         "Canned Goods",
+    "Canned Food":          "Canned Goods",
+    "Canned":               "Canned Goods",
+    "Jarred":               "Canned Goods",
+    "Canned Soup":          "Canned Goods",
+    "Canned Broth":         "Canned Goods",
+    "Canned Tomato":        "Canned Goods",
+    # Condiments
     "Condiments":           "Condiments",
+    "Sauces":               "Condiments",
+    "Salad Dressing":       "Condiments",
+    "Oils":                 "Condiments",
+    "Vinegar":              "Condiments",
+    "Spreads":              "Condiments",
+    "Jams":                 "Condiments",
+    # Baking
     "Baking":               "Baking",
+    "Bake":                 "Baking",
+    "Cake Mix":             "Baking",
+    "Spices":               "Baking",
+    "Herbs":                "Baking",
+    "Extracts":             "Baking",
+    # Non-food
     "Personal Care":        "Personal Care",
+    "Beauty":               "Personal Care",
+    "Hair Care":            "Personal Care",
     "Cleaning":             "Cleaning",
+    "Household":            "Cleaning",
+    "Laundry":              "Cleaning",
     "Baby":                 "Baby",
+    "Infant":               "Baby",
     "Pet":                  "Pet",
+    "Dog":                  "Pet",
+    "Cat":                  "Pet",
     "Health":               "Health",
-    "Natural":              "Natural",
-    "Organic":              "Produce",
+    "Medicine":             "Health",
+    "Pharmacy":             "Health",
+    "Vitamins":             "Health",
 }
 
 # ---------------------------------------------------------------------------
@@ -270,9 +337,14 @@ def fetch_products_for_term(term, location_id, max_pages=5):
 # Model mapping
 # ---------------------------------------------------------------------------
 def parse_category(raw_categories):
-    """Map Kroger's category list to our category string."""
+    """Map Kroger's category list to our category string.
+
+    Match longer keys first so specific phrases (e.g. 'Side Dish') take
+    priority over short broad ones (e.g. 'Canned').
+    """
+    sorted_map = sorted(CATEGORY_MAP.items(), key=lambda kv: len(kv[0]), reverse=True)
     for raw in (raw_categories or []):
-        for key, mapped in CATEGORY_MAP.items():
+        for key, mapped in sorted_map:
             if key.lower() in raw.lower():
                 return mapped
     return "Other"
