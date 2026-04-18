@@ -22,14 +22,24 @@ from models import GroceryItem
 # Rules: (regex pattern, new_category)
 # Ordered from most-specific to least-specific.
 TITLE_RULES = [
-    # Cereal & Breakfast
-    (r"\b(oatmeal|grits|cream of wheat|oat bran|malt.*o.*meal|quaker|wheaties|"
-     r"cheerio|corn flake|bran flake|raisin bran|frosted mini|froot loop|"
-     r"lucky charm|cap'n crunch|honey nut|granola|muesli|porridge|farina|"
-     r"breakfast cereal|hot cereal|instant oat)\b",
+    # Bakery — baked goods FIRST, before Cereal/Breakfast catches them
+    (r"\b(muffins?|english muffins?|cinnamon rolls?|cinnamon buns?|sticky buns?|"
+     r"danishs?|danish pastry|croissants?|donuts?|doughnuts?|scones?|coffee cake|"
+     r"crescent rolls?|dinner rolls?|sweet rolls?|pull apart|"
+     r"biscuits?(?! mix)|pancakes?(?!.*mix)|waffles?(?!.*mix|.*frozen)|"
+     r"french toast(?!.*mix)|pastries|pastry|turnovers?|strudels?|"
+     r"kolaches?|bear claw|eclairs?|cream puff|cannoli|brioche|fritter)\b",
+     "Bakery"),
+
+    # Cereal & Breakfast (actual cereals and hot cereals only)
+    (r"\b(oatmeal|grits|cream of wheat|oat bran|malt.*o.*meal|quaker oat|"
+     r"wheaties|cheerio|corn flake|bran flake|raisin bran|frosted mini|"
+     r"froot loop|lucky charm|cap'n crunch|honey nut|"
+     r"muesli|porridge|farina|breakfast cereal|hot cereal|instant oat|"
+     r"granola cereal|cereal bar|morning cereal)\b",
      "Cereal"),
 
-    # Baking
+    # Baking mixes & supplies
     (r"\b(cake mix|brownie mix|muffin mix|cookie mix|biscuit mix|"
      r"cornbread mix|pancake mix|waffle mix|bread mix|pizza dough mix|"
      r"pudding mix|jell-?o|gelatin mix|cheesecake mix|frosting|"
@@ -92,7 +102,7 @@ TITLE_RULES = [
 COMPILED_RULES = [(re.compile(pat, re.IGNORECASE), cat) for pat, cat in TITLE_RULES]
 
 # Categories that are correct sources to re-evaluate (wrongly assigned)
-SOURCE_CATEGORIES = {"Canned Goods", "Other"}
+SOURCE_CATEGORIES = {"Canned Goods", "Other", "Cereal"}
 
 
 def classify_by_title(title: str) -> str | None:

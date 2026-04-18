@@ -92,11 +92,20 @@ CATEGORY_MAP = {
     "Crackers":             "Snacks",
     "Cookies":              "Snacks",
     "Nuts":                 "Snacks",
-    # Cereal / Breakfast
-    "Breakfast":            "Cereal",
+    # Cereal / Breakfast — only actual cereals/hot cereals
+    "Breakfast Cereal":     "Cereal",
+    "Hot Cereal":           "Cereal",
     "Cereal":               "Cereal",
     "Oatmeal":              "Cereal",
-    "Granola":              "Cereal",
+    "Granola Cereal":       "Cereal",
+    # Breakfast bakery items → Bakery (more specific, checked before "Bakery" key)
+    "Breakfast Bakery":     "Bakery",
+    "Breakfast Pastry":     "Bakery",
+    "Muffins":              "Bakery",
+    "Donuts":               "Bakery",
+    "Cinnamon Rolls":       "Bakery",
+    "Croissants":           "Bakery",
+    "Danishes":             "Bakery",
     # Pasta / Rice / Dry Packaged Meals — ordered before "Canned" to take priority
     "Pasta":                "Pasta",
     "Rice":                 "Pasta",
