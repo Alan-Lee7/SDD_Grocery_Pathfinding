@@ -237,8 +237,8 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
   const itemCount = totalBrowseItems + mealItems.length;
 
-  // Calculate cart total
-  const cartTotal = useMemo(() => {
+  // Calculate cart subtotal (before coupons)
+  const cartSubtotal = useMemo(() => {
     let total = 0;
     selectedItems.forEach((qty, productId) => {
       const product = productLookup.get(productId);
@@ -248,6 +248,48 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     });
     return total;
   }, [selectedItems, store.chain, productLookup]);
+
+  const cartItemsWithCoupons = useMemo(() => {
+    const result: { product: ProductData; qty: number; matchedCoupons: CouponData[] }[] = [];
+    selectedItems.forEach((qty, productId) => {
+      const product = productLookup.get(productId);
+      if (!product) return;
+      const matched = coupons.filter(c => c.product_ids && c.product_ids.includes(productId));
+      if (matched.length > 0) result.push({ product, qty, matchedCoupons: matched });
+    });
+    return result;
+  }, [selectedItems, productLookup, coupons]);
+
+  const totalCouponSavings = useMemo(() => {
+    let savings = 0;
+    for (const { product, qty, matchedCoupons } of cartItemsWithCoupons) {
+      const price = product.prices[store.chain];
+      if (price == null) continue;
+      for (const coupon of matchedCoupons) {
+        if (coupon.type === "percentage") {
+          const m = coupon.discount.match(/(\d+(?:\.\d+)?)/);
+          if (m) savings += price * qty * (parseFloat(m[1]) / 100);
+        } else if (coupon.type === "dollar") {
+          const m = coupon.discount.match(/(\d+(?:\.\d+)?)/);
+          if (m) savings += parseFloat(m[1]);
+        } else if (coupon.type === "bogo") {
+          savings += price * Math.floor(qty / 2);
+        } else if (coupon.type === "special") {
+          // handles "N for $X" format
+          const m = coupon.discount.match(/(\d+)\s+for\s+\$?(\d+(?:\.\d+)?)/i);
+          if (m) {
+            const dealQty = parseInt(m[1]);
+            const dealPrice = parseFloat(m[2]);
+            const pairs = Math.floor(qty / dealQty);
+            if (pairs > 0) savings += price * dealQty * pairs - dealPrice * pairs;
+          }
+        }
+      }
+    }
+    return savings;
+  }, [cartItemsWithCoupons, store.chain]);
+
+  const cartTotal = Math.max(0, cartSubtotal - totalCouponSavings);
 
   const budgetRemaining = budget > 0 ? budget - cartTotal : 0;
   const isOverBudget = budget > 0 && cartTotal > budget;
@@ -321,7 +363,18 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
           {budget > 0 && (
             <div className="text-right">
-              <p className="text-sm text-gray-600 mb-1">Cart Total</p>
+              {totalCouponSavings > 0 && (
+                <>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Subtotal</p>
+                  <p className="text-lg font-semibold text-gray-500 dark:text-gray-400 line-through">
+                    ${cartSubtotal.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-green-600 font-semibold mb-1">
+                    -{`$${totalCouponSavings.toFixed(2)}`} coupons
+                  </p>
+                </>
+              )}
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Cart Total</p>
               <p className={`text-3xl font-bold ${isOverBudget ? "text-red-600" : "text-green-700"}`}>
                 ${cartTotal.toFixed(2)}
               </p>
@@ -377,9 +430,39 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
             <div className="flex-1">
               <p className="text-sm font-semibold text-yellow-800">Approaching Budget Limit</p>
               <p className="text-sm text-yellow-700">
-                You're at {budgetProgress.toFixed(0)}% of your budget. Add items carefully!
+                You’re at {budgetProgress.toFixed(0)}% of your budget. Add items carefully!
               </p>
             </div>
+          </div>
+        )}
+
+        {cartItemsWithCoupons.length > 0 && (
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+            <p className="text-sm font-semibold text-green-800 dark:text-green-400 flex items-center gap-1 mb-2">
+              <Tag className="size-4" />
+              {cartItemsWithCoupons.length} cart item{cartItemsWithCoupons.length !== 1 ? "s" : ""} with coupons
+            </p>
+            <div className="space-y-2">
+              {cartItemsWithCoupons.map(({ product, qty, matchedCoupons }) => (
+                <div key={product.product_id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-gray-700 dark:text-gray-300 truncate flex-1">
+                    {product.title}{qty > 1 ? ` ×${qty}` : ""}
+                  </span>
+                  <div className="flex flex-wrap gap-1 shrink-0">
+                    {matchedCoupons.map(c => (
+                      <span key={c.id} className="px-2 py-0.5 bg-green-600 text-white text-xs font-bold rounded-full whitespace-nowrap">
+                        {c.discount}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {totalCouponSavings > 0 && (
+              <p className="text-sm font-bold text-green-700 dark:text-green-400 mt-2 pt-2 border-t border-green-200 dark:border-green-700 text-right">
+                Est. coupon savings: ${totalCouponSavings.toFixed(2)}
+              </p>
+            )}
           </div>
         )}
       </div>
