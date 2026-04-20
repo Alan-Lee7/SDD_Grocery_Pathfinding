@@ -34,7 +34,9 @@ TITLE_RULES = [
     # Cereal & Breakfast (actual cereals and hot cereals only)
     (r"\b(oatmeal|grits|cream of wheat|oat bran|malt.*o.*meal|quaker oat|"
      r"wheaties|cheerio|corn flake|bran flake|raisin bran|frosted mini|"
-     r"froot loop|lucky charm|cap'n crunch|honey nut|"
+     r"froot loop|lucky charm|cap'n crunch|honey nut|honey cluster|"
+     r"reese.?s puffs?|cocoa puffs?|trix cereal|fiber one|"
+     r"peanut butter.*cereal|chocolatey.*cereal|cereal.*peanut butter|"
      r"muesli|porridge|farina|breakfast cereal|hot cereal|instant oat|"
      r"granola cereal|cereal bar|morning cereal)\b",
      "Cereal"),
@@ -46,24 +48,23 @@ TITLE_RULES = [
      r"powdered sugar|baking mix|pie filling)\b",
      "Baking"),
 
-    # Pasta / Rice / Dry Grains (boxed or dry)
+    # Pasta / Dry Noodles only — rice, potatoes, grains go to Other
     (r"\b(mac(aroni)?.*(and|&|n).?cheese|kraft dinner|velveeta shells|"
-     r"hamburger helper|pasta roni|rice.?a.?roni|tuna helper|"
-     r"instant rice|minute rice|uncle ben|ben.s original|"
-     r"instant noodle|ramen|cup noodle|maruchan|"
-     r"instant mashed potato|mashed potato mix|potato flakes|"
-     r"idaho potato|potato buds|potato mix|au gratin potato|"
-     r"scalloped potato|potato casserole|hash brown mix|"
-     r"couscous mix|quinoa mix|stuffing mix|stove top stuffing|"
-     r"knorr pasta|knorr rice|knorr side|pasta side|rice side)\b",
+     r"hamburger helper|pasta roni|tuna helper|"
+     r"instant noodles?|ramen|cup noodles?|maruchan|"
+     r"couscous mix|stuffing mix|stove top stuffing|"
+     r"knorr pasta|pasta side)\b",
      "Pasta"),
 
     # Snacks — keep chips/crackers/candy out of canned goods
     (r"\b(potato chip|corn chip|tortilla chip|pita chip|veggie chip|"
-     r"cheese puff|cheese curl|cheeto|dorito|lays|pringles|ruffles|"
-     r"cracker|pretzel|popcorn|rice cake|rice crisp|"
+     r"cheese puff|cheese curl|cheeto|dorito|lays|pringles|ruffles(?! pasta| noodle)|"
+     r"cracker|pretzel|popcorn|rice cake|rice crisp(?! pasta| noodle)|"
      r"granola bar|protein bar|snack bar|cereal bar|fruit snack|"
-     r"fruit roll|gummy|licorice|candy|chocolate bar|"
+     r"fruit roll|gummy|licorice|candy|chocolate bar|chocolate cup|"
+     r"peanut butter cup|reeses|feastables|hershey|kit kat|snickers|"
+     r"m&m|twix|butterfinger|milky way|almond joy|mounds|"
+     r"lunchmaker|lunch maker|meal kit|snack kit|nacho.*kit|"
      r"trail mix|nut mix|chex mix)\b",
      "Snacks"),
 
@@ -74,15 +75,18 @@ TITLE_RULES = [
      "Beverages"),
 
     # Condiments — dry sauce/gravy packets
-    (r"\b(gravy mix|sauce mix|seasoning packet|taco seasoning|"
+    (r"\b(gravy mix|sauce mix(?! potato| cheese sauce)|seasoning packet|taco seasoning|"
      r"ranch mix|dip mix|dressing mix|hollandaise mix|"
      r"bearnaise mix|soup mix packet)\b",
      "Condiments"),
 
     # Condiments — jars/bottles that can end up with canned goods
-    (r"\b(salsa|hot sauce|bbq sauce|barbecue sauce|ketchup|mustard|"
-     r"mayonnaise|mayo|relish|pickle|olive|capers|jam|jelly|"
-     r"peanut butter|almond butter|nut butter|honey|maple syrup|"
+    (r"\b(salsa|hot sauce|bbq sauce|barbecue sauce|steak sauce|worcestershire|"
+     r"teriyaki sauce|soy sauce|fish sauce|oyster sauce|hoisin|"
+     r"ketchup|mustard|"
+     r"mayonnaise|mayo(?! coba)|relish|pickle|olive|capers|jam|jelly|"
+     r"peanut butter(?! cereal| cup| puff| bar| crunch)|\balmond butter|nut butter|"
+     r"pure honey|raw honey|clover honey|maple syrup|"
      r"pancake syrup|molasses|tahini|hummus jar)\b",
      "Condiments"),
 
@@ -102,7 +106,7 @@ TITLE_RULES = [
 COMPILED_RULES = [(re.compile(pat, re.IGNORECASE), cat) for pat, cat in TITLE_RULES]
 
 # Categories that are correct sources to re-evaluate (wrongly assigned)
-SOURCE_CATEGORIES = {"Canned Goods", "Other", "Cereal"}
+SOURCE_CATEGORIES = {"Canned Goods", "Other", "Cereal", "Condiments", "Pasta", "Meat"}
 
 
 def classify_by_title(title: str) -> str | None:

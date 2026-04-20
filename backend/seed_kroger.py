@@ -60,7 +60,7 @@ CATEGORY_MAP = {
     # Perishables / fresh departments
     "Produce":              "Produce",
     "Organic":              "Produce",
-    "Natural":              "Produce",
+    "Natural":              "Other",
     "Bakery":               "Bakery",
     "Bread":                "Bakery",
     "Tortilla":             "Bakery",
