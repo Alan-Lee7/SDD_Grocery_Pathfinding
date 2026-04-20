@@ -43,6 +43,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const [showCoupons, setShowCoupons] = useState(true);
   const [activeCoupon, setActiveCoupon] = useState<CouponData | null>(null);
   const [couponProducts, setCouponProducts] = useState<ProductData[]>([]);
+  const [allSeenCouponProducts, setAllSeenCouponProducts] = useState<Map<number, ProductData>>(new Map());
   const [loadingCouponProducts, setLoadingCouponProducts] = useState(false);
   const [expandedCouponItems, setExpandedCouponItems] = useState<Set<number>>(new Set());
 
@@ -56,7 +57,14 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
       ...(ids && ids.length > 0 ? { ids } : { search: activeCoupon.keywords || undefined, category: activeCoupon.keywords ? undefined : activeCoupon.category }),
       limit: 50,
     })
-      .then(res => setCouponProducts(res.items))
+      .then(res => {
+        setCouponProducts(res.items);
+        setAllSeenCouponProducts(prev => {
+          const next = new Map(prev);
+          for (const p of res.items) next.set(p.product_id, p);
+          return next;
+        });
+      })
       .catch(() => setCouponProducts([]))
       .finally(() => setLoadingCouponProducts(false));
   }, [activeCoupon, store.chain]);
@@ -129,9 +137,9 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
   const productLookup = useMemo(() => {
     const m = new Map<number, ProductData>();
     for (const p of availableProducts) m.set(p.product_id, p);
-    for (const p of couponProducts) if (!m.has(p.product_id)) m.set(p.product_id, p);
+    for (const [id, p] of allSeenCouponProducts) if (!m.has(id)) m.set(id, p);
     return m;
-  }, [availableProducts, couponProducts]);
+  }, [availableProducts, allSeenCouponProducts]);
 
   const addProduct = (productId: number) => {
     const newMap = new Map(selectedItems);
