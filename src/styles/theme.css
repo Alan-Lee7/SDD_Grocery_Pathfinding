@@ -1,5 +1,9 @@
 @custom-variant dark (&:is(.dark *));
 
+html.large-text {
+  font-size: 112%;
+}
+
 :root {
   --font-size: 16px;
   --background: #ffffff;

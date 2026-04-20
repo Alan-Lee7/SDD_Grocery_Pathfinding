@@ -43,6 +43,11 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem("shopRoute_largeText", String(largeText));
+    if (largeText) {
+      document.documentElement.classList.add("large-text");
+    } else {
+      document.documentElement.classList.remove("large-text");
+    }
   }, [largeText]);
 
   useEffect(() => {
