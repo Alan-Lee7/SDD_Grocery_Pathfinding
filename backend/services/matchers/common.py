@@ -1,7 +1,7 @@
 ﻿import json
 import re
 from typing import List, Optional, Dict
-from models import GroceryItem, ItemPrice, ItemStoreAvailability, Coupon
+from models import GroceryItem, ItemPrice, ItemStoreAvailability, Coupon, CouponProduct
 from database import db
 
 
@@ -190,9 +190,17 @@ def best_coupon_for_item(item: GroceryItem, store_chain: str, base_price: float)
             }
 
     # Fallback hardcoded matching by title if DB-linking doesn't yield a better coupon.
+    # Skip the hardcoded fallback for any coupon that has explicit DB-linked products for
+    # this store — if the item isn't in that explicit list, it's not eligible.
     hard = hardcoded_coupon_for_title(item.title or "", store_chain, base_price, category=item.category)
     if hard and hard["effective_unit_price"] < best_price:
-        best = hard
+        db_coupon = Coupon.query.filter_by(store_chain=store_chain, title=hard["title"]).first()
+        coupon_has_explicit_links = (
+            db_coupon is not None
+            and db.session.query(CouponProduct).filter_by(coupon_id=db_coupon.id).count() > 0
+        )
+        if not coupon_has_explicit_links:
+            best = hard
 
     return best
 

@@ -74,6 +74,38 @@ def apply_cart_level_coupon_overrides(matched_items, store_chain: str, coupon_mo
                 p["effective_unit_price"] = p.get("base_unit_price", p.get("effective_unit_price"))
                 p.pop("applied_coupon", None)
 
+    # Fix BOGO/B2G1 pricing: N-1 items at full price, every Nth item free.
+    # Averaging across all items is wrong for display and totals.
+    bogo_groups: dict = defaultdict(list)
+    for m in matched_items:
+        p = m.get("product", {})
+        coupon = p.get("applied_coupon")
+        if coupon and coupon.get("coupon_type") == "bogo":
+            bogo_groups[coupon["title"]].append(p)
+
+    for coupon_title, products in bogo_groups.items():
+        discount = ((products[0].get("applied_coupon") or {}).get("discount", "")).lower()
+        if "b2g1" in discount or "buy 2" in discount:
+            group_size = 3
+            pay_count = 2
+        else:
+            group_size = 2
+            pay_count = 1
+
+        if len(products) < group_size:
+            # Not enough items to trigger the deal — revert to full price
+            for p in products:
+                p["effective_unit_price"] = p.get("base_unit_price", p.get("effective_unit_price"))
+                p.pop("applied_coupon", None)
+            continue
+
+        for i, p in enumerate(products):
+            base = p.get("base_unit_price", p.get("effective_unit_price", 0.0))
+            if i % group_size < pay_count:
+                p["effective_unit_price"] = base
+            else:
+                p["effective_unit_price"] = 0.0
+
 
 def optimize_shopping_list(input_items, store_chain, prefer_store_brand=False, budget=0.0, coupon_mode=False, accessibility_mode=False):
     context = OptimizeContext(
