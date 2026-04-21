@@ -311,7 +311,11 @@ COUPONS = {
             "coupon_type": "special",
             "keywords": "boneless chicken breast",
             "max_products": 2,
-            "exact_titles": ["Perdue\ufffd Harvestland\ufffd Individually Wrapped Boneless Skinless Chicken Breast"],
+            "exact_titles": [
+                "Perdue\ufffd Harvestland\ufffd Individually Wrapped Boneless Skinless Chicken Breast",
+                "Heritage Farm\ufffd Bone In Skin On Split Chicken Breasts",
+                "Heritage Farm\ufffd Boneless Skinless Chicken Breasts",
+            ],
         },
         {
             "coupon_code": None,
