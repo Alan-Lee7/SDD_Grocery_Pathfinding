@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react"; // Edit3 reserved for Write List tab
+﻿import { ArrowLeft, Sparkles, Package, Plus, Minus, Search, Tag, Clock, Percent, ChefHat, Users, DollarSign, Loader2, CheckCircle, ChevronDown, ChevronUp, AlertTriangle, Lightbulb } from "lucide-react"; // Edit3 reserved for Write List tab
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getItems, getCategories, getCoupons, type ProductData, type CouponData } from "../api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -159,10 +159,42 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
     setSelectedItems(newMap);
   };
 
-  const handleAddMeal = (mealId: string, ingredients: string[]) => {
-    setMealItems(prev => [...prev, ...ingredients]);
+  const handleAddMeal = async (mealId: string, ingredients: string[]) => {
     setAddedMealIds(prev => new Set([...prev, mealId]));
     setActiveTab("browse");
+
+    // Resolve each ingredient to a real product for accurate budget tracking
+    const resolvedOrNull = await Promise.all(
+      ingredients.map(ingredient =>
+        getItems({ store: store.chain, search: ingredient, limit: 1 })
+          .then(res => res.items[0] ?? null)
+          .catch(() => null)
+      )
+    );
+
+    const resolved = resolvedOrNull.filter((p): p is ProductData => p !== null);
+    const unresolvedIngredients = ingredients.filter((_, i) => resolvedOrNull[i] === null);
+
+    // Add resolved products to the lookup so prices are visible in the budget
+    setAvailableProducts(prev => {
+      const existingIds = new Set(prev.map(p => p.product_id));
+      const newProducts = resolved.filter(p => !existingIds.has(p.product_id));
+      return newProducts.length > 0 ? [...prev, ...newProducts] : prev;
+    });
+
+    // Add resolved products to selectedItems (qty 1 each)
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      for (const product of resolved) {
+        next.set(product.product_id, (next.get(product.product_id) ?? 0) + 1);
+      }
+      return next;
+    });
+
+    // Only keep unresolved ingredients in mealItems (passed as text to the optimizer)
+    if (unresolvedIngredients.length > 0) {
+      setMealItems(prev => [...prev, ...unresolvedIngredients]);
+    }
   };
 
   const handleOptimize = async () => {
@@ -422,7 +454,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         {/* Budget Warning */}
         {isOverBudget && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <span className="text-red-600 text-xl">âš ï¸</span>
+            <AlertTriangle className="size-5 text-red-600 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-800">Over Budget!</p>
               <p className="text-sm text-red-700">
@@ -434,7 +466,7 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
 
         {budget > 0 && budgetProgress >= 80 && !isOverBudget && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-            <span className="text-yellow-600 text-xl">ðŸ’¡</span>
+            <Lightbulb className="size-5 text-yellow-600 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-yellow-800">Approaching Budget Limit</p>
               <p className="text-sm text-yellow-700">

@@ -39,6 +39,11 @@ export default function App() {
   // Persist preferences locally (also synced to backend on change)
   useEffect(() => {
     localStorage.setItem("shopRoute_darkMode", String(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, [darkMode]);
 
   useEffect(() => {
@@ -156,7 +161,7 @@ export default function App() {
 
   if (step === "auth") {
     return (
-      <div className={darkMode ? "dark" : ""}>
+      <div>
         <div className="dark:bg-gray-900">
           <Auth onAuthSuccess={handleAuthSuccess} />
         </div>
@@ -165,7 +170,7 @@ export default function App() {
   }
 
   return (
-    <div className={darkMode ? "dark" : ""}>
+    <div>
     <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 ${largeText ? "text-lg" : ""}`}>
       {/* Header */}
       {user && (
