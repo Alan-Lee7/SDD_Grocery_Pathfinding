@@ -971,6 +971,99 @@ export function ListInput({ store, onBack, onOptimize, largeText = false, prefer
         </div>
       )}
 
+      {/* Cart Summary Section */}
+      {(selectedItems.size > 0 || mealItems.length > 0) && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md mt-6 mb-6">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 className={`font-bold ${largeText ? "text-2xl" : "text-lg"} dark:text-gray-100 flex items-center gap-2`}>
+              <Package className="size-5 text-blue-600" />
+              Your Cart
+              <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full font-semibold">
+                {itemCount}
+              </span>
+            </h3>
+            {budget > 0 && (
+              <p className={`font-semibold ${isOverBudget ? "text-red-600" : "text-green-700"} ${largeText ? "text-lg" : "text-base"}`}>
+                ${cartTotal.toFixed(2)} / ${budget.toFixed(2)}
+              </p>
+            )}
+          </div>
+
+          <div className="p-6 space-y-3">
+            {/* Browse / meal-resolved products */}
+            {Array.from(selectedItems.entries()).map(([productId, qty]) => {
+              const product = productLookup.get(productId);
+              if (!product) return null;
+              const price = product.prices[store.chain];
+              const wouldExceedBudget = !canAddProduct(productId) && budget > 0;
+              const matchingCoupons = coupons.filter(c => c.product_ids && c.product_ids.includes(productId));
+              return (
+                <div key={productId} className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  <img
+                    src={product.image_url}
+                    alt={product.title}
+                    className="w-12 h-12 object-cover rounded-lg shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className={`${largeText ? "text-base" : "text-sm"} font-medium dark:text-gray-100 line-clamp-1`}>{product.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {price != null && (
+                        <span className={`${largeText ? "text-base" : "text-sm"} font-bold text-blue-600`}>${(price * qty).toFixed(2)}</span>
+                      )}
+                      {matchingCoupons.length > 0 && (
+                        <div className="flex gap-1">
+                          {matchingCoupons.map(c => (
+                            <span key={c.id} className={`px-1.5 py-0.5 bg-green-100 text-green-700 ${largeText ? "text-sm" : "text-xs"} font-bold rounded-full`}>
+                              {c.discount}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => removeProduct(productId)}
+                      className={`${largeText ? "p-2.5" : "p-1.5"} bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors`}
+                    >
+                      <Minus className={largeText ? "size-5" : "size-3.5"} />
+                    </button>
+                    <span className={`font-semibold ${largeText ? "w-8 text-lg" : "w-6"} text-center dark:text-gray-100`}>{qty}</span>
+                    <button
+                      onClick={() => addProduct(productId)}
+                      disabled={wouldExceedBudget}
+                      className={`${largeText ? "p-2.5" : "p-1.5"} rounded-lg transition-colors ${wouldExceedBudget ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                    >
+                      <Plus className={largeText ? "size-5" : "size-3.5"} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Unresolved meal ingredients */}
+            {mealItems.map((ingredient, idx) => (
+              <div key={`meal-${idx}`} className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg shrink-0 flex items-center justify-center">
+                  <ChefHat className="size-6 text-orange-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`${largeText ? "text-base" : "text-sm"} font-medium dark:text-gray-100`}>{ingredient}</p>
+                  <p className={`${largeText ? "text-sm" : "text-xs"} text-orange-600 dark:text-orange-400`}>From meal plan</p>
+                </div>
+                <button
+                  onClick={() => setMealItems(prev => prev.filter((_, i) => i !== idx))}
+                  className={`${largeText ? "p-2.5" : "p-1.5"} bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors shrink-0`}
+                >
+                  <Minus className={largeText ? "size-5" : "size-3.5"} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Bottom Action Bar - sticky */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg px-4 py-3 flex justify-between items-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">
